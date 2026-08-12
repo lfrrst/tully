@@ -52,10 +52,14 @@ def test_missing_skill_md_fails(tmp_path):
 
 
 def test_name_mismatch_fails(tmp_path):
-    make_skill(tmp_path, "real-name", frontmatter_name="other-name")
+    # The fixture directory name must not contain any word the assertion checks
+    # for. The validator prints one result line per directory, so a fixture named
+    # "real-name" would satisfy `assert "name" in stdout` from its own name alone
+    # and the test would pass whether or not the mismatch was detected.
+    make_skill(tmp_path, "alpha", frontmatter_name="beta")
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "name" in r.stdout
+    assert "frontmatter name is 'beta', expected 'alpha'" in r.stdout
 
 
 def test_missing_description_fails(tmp_path):
@@ -101,11 +105,36 @@ def test_evals_skill_name_mismatch_fails(tmp_path):
 
 
 def test_empty_evals_list_fails(tmp_path):
-    make_skill(tmp_path, "empty-evals",
-               evals_body={"skill_name": "empty-evals", "evals": []})
+    # Named "barren" rather than "empty-evals" for the same reason as
+    # test_name_mismatch_fails: the assertion must not be satisfiable by the
+    # fixture's own directory name appearing in the result line.
+    make_skill(tmp_path, "barren", evals_body={"skill_name": "barren", "evals": []})
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "evals" in r.stdout
+    assert "has an empty evals list" in r.stdout
+
+
+def test_missing_evals_json_fails(tmp_path):
+    d = make_skill(tmp_path, "no-evals-file")
+    (d / "evals" / "evals.json").unlink()
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "evals/evals.json is missing" in r.stdout
+
+
+def test_unterminated_frontmatter_fails(tmp_path):
+    d = make_skill(tmp_path, "unterminated")
+    (d / "SKILL.md").write_text("---\nname: unterminated\ndescription: x\n",
+                                encoding="utf-8")
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "no terminated YAML frontmatter" in r.stdout
+
+
+def test_nonexistent_skills_dir_exits_two(tmp_path):
+    r = run(tmp_path / "absent")
+    assert r.returncode == 2
+    assert "no such skills directory" in r.stderr
 
 
 def test_reports_every_failure_not_just_the_first(tmp_path):
