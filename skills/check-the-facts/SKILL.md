@@ -8,7 +8,7 @@ description: "Adversarially verify a review document by finding statements in it
 **Do not skip this.** The person who wrote a sentence is the worst reader of it: they
 read the sentence they meant, and the one on the page is close enough that nothing
 snags. That is not carelessness, and it does not yield to being more careful — in
-testing, a pass of this kind found **26 errors across two documents that had already
+testing, a pass of this sort found **26 errors across two documents that had already
 been written carefully**. Every one would have been embarrassing in a workpaper and
 none was visible to the person who wrote it. So the phase is not a final polish that a
 tight deadline can drop. It is the difference between a document whose figures hold up
@@ -61,11 +61,12 @@ claim* rather than on whether it exists. Run it yourself and hand the agent the 
 An agent told to run it will re-establish the resolvable half itself, at agent prices,
 and then have less budget left for the half no script can do.
 
-What it establishes is exactly four things, all mechanical: a cited file that is not in
-the tree, a line number past the end of the file it cites, a basename that matches two
-files so the citation names neither, and — in the sample — a citation resolving to a
-blank line, which is almost always an off-by-one against the block below it. Those four
-are settled, and they should not be re-argued by a reader.
+What it establishes is mechanical, and worth knowing precisely: a cited file that is not
+in the tree, a line number past the end of the file it cites, a basename that matches
+two files so the citation names neither, a file it cannot open at all, and — in the
+sample — a citation resolving to a blank line, which is almost always an off-by-one
+against the block below it. Each of those is settled and should not be re-argued by a
+reader.
 
 The exit codes are a contract: **0** when every citation resolves, **1** when any does
 not, **2** on a missing document or a missing source root. Treat 2 as a broken
@@ -174,6 +175,13 @@ go somewhere else: the sections written last, the figures quoted twice, the find
 whose test was recorded as an adjective rather than an operation.
 
 ## The output contract
+
+**The agent reports its error list back to you, and you write the file.** It has no
+write tool, deliberately: the caller is the only party that sees every book's result,
+and the caller is who has to fix the books afterwards, so routing the list through you
+is what keeps the fix and the record from drifting apart. Where you ran the pass
+yourself, the same obligation stands — the file is the output of the phase, not a
+courtesy the delegated path happens to produce.
 
 One file per book, `evidence/04-verification-<book>.md`, with `<book>` naming which
 book it verifies. It is an error list, and every entry carries four things: the claim,
