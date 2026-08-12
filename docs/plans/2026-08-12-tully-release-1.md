@@ -48,7 +48,7 @@ Every task's requirements implicitly include this section.
   | `finding-patterns.md` line 81, the inherited account code | `41204` |
   | `finding-patterns.md` line 81, the failing source row number | `118` |
   | `finding-patterns.md` line 81, the preceding source row number | `117` |
-  | every occurrence of the phrase introducing the source engagement | `In the engagement this catalogue was written from` |
+  | every occurrence of the phrase introducing the source engagement | `In the engagement this <noun> was written from`, where `<noun>` names the document it appears in — `catalogue` in `finding-patterns.md`, `phase` in a phase skill, `review` elsewhere |
 
   Fictional systems, chosen once: source system **Ledgerline Fund Accounting**, target system **Aurora ERP**. No client is named at all.
 
@@ -69,7 +69,7 @@ Every task's requirements implicitly include this section.
 
 Two of the ten tasks build Python and get ordinary TDD. The other eight produce Markdown, where the honest test cycle is:
 
-1. Write `evals/evals.json` **first** — it is the specification of what the skill must do, written before the skill.
+1. Write `evals/evals.json` **first** — it is the specification of what the skill must do, written before the skill. Every eval carries `"files": []` throughout: the prompts are conversational and the grader runs the skill against them, so no fixture is needed. Assertions are phrased as completed actions because they describe the procedure a correct response commits to, not work the grader performs. That convention is settled for the whole plan and is not a per-task decision.
 2. Run `tools/validate_skills.py`, which fails because the skill does not exist yet.
 3. Write the skill.
 4. Run the validator; it passes.
@@ -921,7 +921,9 @@ Write proper prose, not bullet soup. The source is the model for register.
 - [ ] **Step 5: Run the validator to verify it passes**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok establish-the-truth`, exit 0.
+Expected: `ok    establish-the-truth` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported.
+
+The exit code is 1, not 0, from here until Task 7. `skills/check-the-facts/` has existed since Task 2 holding only `scripts/` and `tests/`; its `SKILL.md` arrives in Task 7. **Do not stub it to make the gate green** — the gate for this task is your own skill's line reading `ok`.
 
 - [ ] **Step 6: Read the skill against its own eval assertions**
 
@@ -1168,7 +1170,7 @@ Body, from `$SRC/SKILL.md:41-64`. It must contain:
 - [ ] **Step 6: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok map-the-code`, exit 0.
+Expected: `ok    map-the-code` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5 — the exit code stays 1 until Task 7, and stubbing `check-the-facts` to green it is forbidden.
 
 - [ ] **Step 7: Read the skill and agent against the eval assertions**
 
@@ -1543,7 +1545,7 @@ Body, from `$SRC/SKILL.md:66-68` plus the warning it inherits from §"Things tha
 - [ ] **Step 8: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok hunt-the-findings`, exit 0.
+Expected: `ok    hunt-the-findings` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5.
 
 - [ ] **Step 9: Read the skill against the eval assertions**
 
@@ -1698,7 +1700,7 @@ Body, from `$SRC/SKILL.md:70-74` (phase 4), `:95-99` (phase 6), and four of the 
 - [ ] **Step 5: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok write-the-books`, exit 0.
+Expected: `ok    write-the-books` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5.
 
 - [ ] **Step 6: Read the skill against the eval assertions**
 
