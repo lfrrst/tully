@@ -1,0 +1,47 @@
+{
+  "skill_name": "hunt-the-findings",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The map is done. Now find what's wrong with this tool.",
+      "expected_output": "Should work the catalogue in references/finding-patterns.md deliberately rather than hoping the module map surfaced the defects. Should explain that most of these classes are invisible from any single function and appear only when two things the code keeps apart are compared. Should test each candidate rather than reasoning about it, and record per candidate how it was tested and whether it is reproducible. Should record what held up under attack as well as what failed, so a reader can distinguish examined-and-sound from never-examined.",
+      "assertions": [
+        "Works the catalogue deliberately rather than opportunistically",
+        "Explains that most classes need two things compared, not one function read",
+        "Tests each candidate rather than reasoning about it",
+        "Records how each candidate was tested",
+        "Marks each finding reproducible or not",
+        "Records negative results as part of the deliverable",
+        "Writes evidence/03-findings.md"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "the dashboard is all green, 340-odd checks passing. are these checks actually worth anything?",
+      "expected_output": "Should trigger on casual phrasing. Should separate what the tool attests from what the tool detects. Should test each check for the classes in the catalogue: whether both operands trace to the same data with nothing between that could move them apart, whether a verdict is a hard-coded literal, whether the step immediately before made the condition true, and whether the population measured is the population delivered. Should distinguish a check correctly declared informational from one documented as a control, and should credit checks whose expectation comes from outside the pipeline.",
+      "assertions": [
+        "Triggers on casual phrasing about a green dashboard",
+        "Separates what the tool attests from what it detects",
+        "Traces both operands of a check to where they are written",
+        "Checks whether the preceding step made the condition true",
+        "Compares the population measured against the population delivered",
+        "Distinguishes correctly-declared informational checks from controls",
+        "Credits checks whose expectation comes from outside the pipeline"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "There's no exceptions file in the output folder, so I take it there were no exceptions. Anything else to look at?",
+      "expected_output": "Should reject the inference: many tools write an exceptions file only when there are exceptions, so its absence means the tool found none by its own definition — which is exactly the definition under review. Should say what to do instead, which is to establish from the artifacts what the control set does not cover at all rather than reasoning about the code.",
+      "assertions": [
+        "Rejects absence of an evidence file as evidence of nothing to report",
+        "Names the circularity: found none by its own definition, which is the definition under review",
+        "Says to establish coverage from the artifacts rather than from the code",
+        "Does not simply agree with the user's inference"
+      ],
+      "files": []
+    }
+  ]
+}
