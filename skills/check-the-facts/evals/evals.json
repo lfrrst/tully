@@ -1,0 +1,47 @@
+{
+  "skill_name": "check-the-facts",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Both books are drafted. Check them before I send them to the partner.",
+      "expected_output": "Should run scripts/citation_check.py first and hand its output to a fact-checker agent per book, so the agent's attention goes to whether a cited line supports the claim rather than to whether it exists. Should dispatch one agent per book with the instruction to find statements that are wrong and explicitly not to praise what checks out. Should check a large well-spread sample of citations including every citation supporting a finding, every table a reader would act on, every quantitative claim, and each finding reproduced from scratch. Should fix everything found and then report that the pass ran and what it caught.",
+      "assertions": [
+        "Runs citation_check.py before dispatching",
+        "Hands the script output to the agent",
+        "Dispatches one fact-checker per book",
+        "Instructs the agent not to praise what checks out",
+        "Checks every citation supporting a finding, not just a sample",
+        "Re-derives every quantitative claim",
+        "Reproduces each finding from scratch",
+        "Reports that the pass ran and what it caught, as part of the deliverable's credibility"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Someone's AI wrote this technical document with a load of file:line references in it. Are they real?",
+      "expected_output": "Should recognise this as a standalone verification against a document it did not write, and run citation_check.py against the document and the source tree. Should distinguish what the script can establish — dead files, out-of-range lines, ambiguous paths, blank targets — from what it cannot, which is a citation resolving to a real line that says something else. Should sample the resolved citations and read whether each cited line supports the claim made at that point in the document.",
+      "assertions": [
+        "Triggers on a verification request for a document it did not write",
+        "Runs the script against document and source tree",
+        "States what the script can and cannot establish",
+        "Reads sampled citations for whether the line supports the claim",
+        "Does not treat a resolving citation as a correct one"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "No subagents available in this session. Verify the code review anyway.",
+      "expected_output": "Should change the mode of work rather than re-reading: re-derive every quantitative claim mechanically from the run folders with a script, and re-resolve every finding-bearing citation, without looking at what was written until the script has produced its own answer, then compare. Should say explicitly that re-reading your own prose finds nothing while recomputing the number finds plenty. Should note that a self-verification done this way still caught five errors in testing, including an off-by-one in a total and a wrong divergence point.",
+      "assertions": [
+        "Changes the mode of work rather than re-reading the prose",
+        "Re-derives quantitative claims mechanically with a script",
+        "Produces its own answer before looking at what was written",
+        "Explains why re-reading finds nothing",
+        "Does not claim equivalence with a delegated pass"
+      ],
+      "files": []
+    }
+  ]
+}
