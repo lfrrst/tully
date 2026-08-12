@@ -1358,8 +1358,14 @@ def test_same_line_leak_is_found(tmp_path):
 
 def test_leak_wrapped_across_a_newline_is_found(tmp_path):
     # The whole point. A line-based grep misses this.
-    aid = write_aid(tmp_path, [("63 rows carrying $2M", "about 40 rows")])
-    (tmp_path / "doc.md").write_text("the defect covered 63 rows\ncarrying $2M gross\n",
+    #
+    # The figures below are invented. They have to be: a fixture is a tracked file,
+    # and this project's one unrecoverable rule is that no real client value enters
+    # history. Any multi-token string straddling the newline exercises the behaviour
+    # under test, so nothing is lost by making them up, and using a real one to
+    # illustrate a leak check would be the leak.
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "doc.md").write_text("the defect covered 63 rows\ncarrying $7M gross\n",
                                      encoding="utf-8")
     r = run(aid, tmp_path / "doc.md")
     assert r.returncode == 1
