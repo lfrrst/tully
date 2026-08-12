@@ -2074,7 +2074,12 @@ Expected: `ok check-the-facts`, exit 0. This also confirms the body's citations 
 
 - [ ] **Step 6: Read the skill and agent against the eval assertions**
 
-Confirm all 17 assertions are satisfiable. Eval 3's "Does not claim equivalence with a delegated pass" matters: the source is careful that the fallback is worse than delegation, and the skill must not flatten that into "either is fine".
+Confirm all 18 assertions are satisfiable — 8 in eval 1, 5 in each of evals 2 and 3. Eval 3's "Does not claim equivalence with a delegated pass" matters most: the source is careful that the fallback is worse than delegation, and the skill must not flatten that into "either is fine".
+
+Two things this step must also confirm, because both are easy to write past:
+
+- **The `fact-checker` agent has no `Write` tool** — its grant is `Read, Grep, Glob, Bash`. So the agent reports its errors back and *the skill* writes `evidence/04-verification-<book>.md`. If the skill instead tells the agent to write the file, the file never appears and the verification pass leaves no artifact for the next reader.
+- **The engagement-introducing phrase is a live leak pattern.** The phase-5 source opens the 26-error statistic with it, so transcribing that sentence as found would fail the confidentiality gate. Replace it the way every other file does, with the noun fitting this document.
 
 - [ ] **Step 7: Run the full suite**
 
