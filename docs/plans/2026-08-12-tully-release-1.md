@@ -1300,18 +1300,214 @@ Now append a second section, **Flagged for author judgement** — items that are
 - `SKILL.md` and the phase-5 material retain three statistics about the review itself — a count of a tool's own passing assertions, the errors a verification pass caught across two documents, and the errors a self-verification caught without a subagent. Retained deliberately under the §13 rule that statistics about the review stay; flagged so the author confirms that reading rather than inheriting it.
 - Any defect description detailed enough to identify the engagement without naming it. §5's context-leak case is the one to look at hardest, since a chart-of-accounts conversion with an inherited-code defect is a recognisable combination even with every figure changed.
 
-- [ ] **Step 5: Verify no client data will be staged**
+- [ ] **Step 5: Build the leak checker, test first**
 
-Build the pattern list from the aid rather than from this plan, so no original value is ever written into a tracked file. The aid's first column is the original values; extract them and grep for them:
+A line-based `grep -F -f` cannot do this job, and discovering that late would be expensive. Markdown is hard-wrapped, so an original value like a row count followed by an amount can straddle a newline in the anonymised prose — and a line-based search reports **clean** on a file that still contains it. That is a check that cannot fail in the negative direction, guarding the one constraint in this project that is unrecoverable if it fails.
 
-```bash
-awk -F'|' '/^\|/ && NF>2 {gsub(/^ +| +$/,"",$2); if ($2 != "" && $2 !~ /original/) print $2}' \
-  docs/anonymisation-review-aid.md > /tmp/tully-originals.txt
-grep -rInFf /tmp/tully-originals.txt skills/ && echo "LEAK — do not stage" || echo "clean"
-rm -f /tmp/tully-originals.txt
+Create `tools/tests/test_leak_check.py` first:
+
+```python
+import subprocess
+import sys
+from pathlib import Path
+
+CHECKER = Path(__file__).resolve().parents[2] / "tools" / "leak_check.py"
+
+
+def run(aid: Path, *targets):
+    return subprocess.run([sys.executable, str(CHECKER), "--aid", str(aid), *map(str, targets)],
+                          capture_output=True, text=True)
+
+
+def write_aid(tmp_path: Path, rows) -> Path:
+    lines = ["# aid", "", "| original | replacement | file | line |", "|---|---|---|---|"]
+    lines += [f"| {o} | {r} | f.md | 1 |" for o, r in rows]
+    p = tmp_path / "aid.md"
+    p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return p
+
+
+def test_clean_tree_exits_zero(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "PUBLICVALUE")])
+    (tmp_path / "doc.md").write_text("nothing sensitive here\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    assert "clean" in r.stdout
+
+
+def test_same_line_leak_is_found(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "PUBLICVALUE")])
+    (tmp_path / "doc.md").write_text("this holds SECRETVALUE inline\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+    assert "SECRETVALUE" in r.stdout
+    assert "doc.md:1" in r.stdout
+
+
+def test_leak_wrapped_across_a_newline_is_found(tmp_path):
+    # The whole point. A line-based grep misses this.
+    aid = write_aid(tmp_path, [("63 rows carrying $2M", "about 40 rows")])
+    (tmp_path / "doc.md").write_text("the defect covered 63 rows\ncarrying $2M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+    assert "doc.md:1" in r.stdout
+
+
+def test_empty_pattern_list_is_an_error_not_a_pass(tmp_path):
+    aid = write_aid(tmp_path, [])
+    (tmp_path / "doc.md").write_text("anything\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 2
+    assert "no patterns" in r.stderr
+
+
+def test_missing_aid_is_an_error(tmp_path):
+    r = run(tmp_path / "absent.md", tmp_path)
+    assert r.returncode == 2
+
+
+def test_directory_target_is_walked(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "deep.md").write_text("SECRETVALUE\n", encoding="utf-8")
+    r = run(aid, sub)
+    assert r.returncode == 1
+    assert "deep.md:1" in r.stdout
+
+
+def test_the_aid_itself_is_never_scanned(tmp_path):
+    # The aid contains every original by definition; scanning it always "leaks".
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    r = run(aid, aid.parent)
+    assert r.returncode == 0, r.stdout
 ```
 
-Expected: `clean`. **If it prints `LEAK`, do not stage anything.**
+Run it and watch it fail:
+
+`python -m pytest tools/tests/test_leak_check.py -v`
+Expected: all 7 FAIL — `tools/leak_check.py` does not exist.
+
+Then create `tools/leak_check.py`:
+
+```python
+#!/usr/bin/env python3
+"""Search a tree for original client values listed in the anonymisation review aid.
+
+Whitespace-insensitive by design. Markdown is hard-wrapped, so an original value
+can straddle a newline in the anonymised prose; a line-based search would report
+clean on a file that still contains it. Both the patterns and the file contents
+are collapsed to single-spaced text before matching, and the reported line number
+is the line the match starts on.
+
+    python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs
+
+Exit 0 clean, 1 if anything matched, 2 on a usage or empty-pattern-list error.
+The aid file is never scanned: it contains every original by definition.
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".superpowers", ".venv"}
+TEXT_SUFFIXES = {".md", ".py", ".json", ".yml", ".yaml", ".txt", ".toml", ".cfg", ""}
+
+
+def patterns_from_aid(aid: Path) -> list[str]:
+    """First column of every data row of the aid's markdown table."""
+    out: list[str] = []
+    for line in aid.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        first = cells[0]
+        if not first or set(first) <= set("-: ") or first.lower() == "original":
+            continue
+        out.append(first)
+    return out
+
+
+def normalise(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
+def iter_files(targets: list[Path], aid: Path):
+    for t in targets:
+        if t.is_file():
+            yield t
+        elif t.is_dir():
+            for p in sorted(t.rglob("*")):
+                if p.is_file() and not (SKIP_DIRS & set(p.parts)) \
+                        and p.suffix.lower() in TEXT_SUFFIXES:
+                    yield p
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--aid", required=True)
+    ap.add_argument("targets", nargs="+")
+    args = ap.parse_args()
+
+    aid = Path(args.aid)
+    if not aid.is_file():
+        print(f"no such aid file: {aid}", file=sys.stderr)
+        return 2
+    pats = patterns_from_aid(aid)
+    if not pats:
+        print("no patterns in the aid: the check would pass trivially", file=sys.stderr)
+        return 2
+
+    aid_resolved = aid.resolve()
+    hits = []
+    for f in iter_files([Path(t) for t in args.targets], aid):
+        if f.resolve() == aid_resolved:
+            continue
+        raw = f.read_text(encoding="utf-8", errors="replace")
+        flat = normalise(raw)
+        for pat in pats:
+            npat = normalise(pat)
+            if npat and npat in flat:
+                # locate the line the match starts on, tolerating the wrap
+                idx = flat.index(npat)
+                prefix_words = flat[:idx].count(" ")
+                line_no, seen = 1, 0
+                for i, line in enumerate(raw.splitlines(), 1):
+                    seen += len(normalise(line).split(" ")) if line.strip() else 0
+                    if seen > prefix_words:
+                        line_no = i
+                        break
+                hits.append((f, line_no, pat))
+
+    print(f"{len(pats)} patterns checked against the tree")
+    if not hits:
+        print("clean")
+        return 0
+    for f, line_no, pat in hits:
+        print(f"  LEAK  {f}:{line_no}  matches {pat!r}")
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+Run the tests again: `python -m pytest tools/tests/test_leak_check.py -v`
+Expected: 7 passed. If `test_leak_wrapped_across_a_newline_is_found` fails, the normalisation is not being applied to both sides.
+
+- [ ] **Step 6: Verify no client data will be staged**
+
+```bash
+python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills
+```
+
+Expected: a non-zero pattern count followed by `clean`. **If it prints `LEAK`, do not stage anything.** Exit 2 means the aid has no rows and the check is vacuous — fix that before trusting it.
 
 Then confirm the aid itself is not stageable:
 
@@ -1321,7 +1517,7 @@ git status --short docs/
 
 Expected: `docs/anonymisation-review-aid.md` does not appear.
 
-- [ ] **Step 6: Write the skill**
+- [ ] **Step 7: Write the skill**
 
 Create `skills/hunt-the-findings/SKILL.md`, frontmatter description verbatim:
 
@@ -1344,19 +1540,19 @@ Body, from `$SRC/SKILL.md:66-68` plus the warning it inherits from §"Things tha
    - *If that is missing:* without the execution spine the ordering-defect classes (catalogue §3) cannot be worked at all, and without an evidence base the classes needing measurement cannot be tested. Name the classes not attempted rather than reporting a clean sweep — a catalogue silently worked at half coverage reads identically to one worked fully.
    - *Hands back:* the path to `evidence/03-findings.md`.
 
-- [ ] **Step 7: Run the validator**
+- [ ] **Step 8: Run the validator**
 
 Run: `python tools/validate_skills.py`
 Expected: `ok hunt-the-findings`, exit 0.
 
-- [ ] **Step 8: Read the skill against the eval assertions**
+- [ ] **Step 9: Read the skill against the eval assertions**
 
 Confirm all 18 assertions are satisfiable. Eval 3's "Does not simply agree with the user's inference" is the one at risk — the skill must be direct enough that a model reading it contradicts a user who has drawn the wrong conclusion.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add skills/hunt-the-findings
+git add skills/hunt-the-findings tools/leak_check.py tools/tests/test_leak_check.py
 git commit -m "$(cat <<'EOF'
 Add hunt-the-findings and the anonymised defect catalogue
 
@@ -2003,21 +2199,21 @@ python tools/validate_skills.py
 python -m pytest -q
 
 # Pre-publication leak check, run locally only. The pattern list comes from the
-# git-ignored aid so no original value is ever written into a tracked file.
-awk -F'|' '/^\|/ && NF>2 {gsub(/^ +| +$/,"",$2); if ($2 != "" && $2 !~ /original/) print $2}' \
-  docs/anonymisation-review-aid.md > /tmp/tully-originals.txt
-wc -l < /tmp/tully-originals.txt   # expect 9 or more; 0 means the aid is empty and the check is vacuous
-grep -rInFf /tmp/tully-originals.txt --exclude-dir=.git . && echo "LEAK" || echo "no client identifiers found"
-rm -f /tmp/tully-originals.txt
+# git-ignored aid, so no original value is ever written into a tracked file.
+python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs examples agents commands tools README.md CONTRIBUTING.md
 
-git log --all --oneline | wc -l
 git status --short
 git remote -v
 ```
 
-Expected: six skills `ok`; all tests pass; a non-zero pattern count followed by `no client identifiers found`; a clean working tree; **no remotes**.
+Expected: six skills `ok`; all tests pass; a non-zero pattern count followed by `clean`; a clean working tree; **no remotes**.
 
-The `wc -l` guard matters: a leak check whose pattern file is empty passes trivially and reports the same reassuring output as one that genuinely found nothing. That is the "check that cannot fail" pattern from the plugin's own catalogue, and it would be an embarrassing place to commit it.
+Two properties of `leak_check.py` are the reason it exists rather than a `grep`, and both were learned the hard way during this build:
+
+- **It is whitespace-insensitive across newlines.** Markdown is hard-wrapped, so an original value can straddle a line break in the anonymised prose. A line-based `grep -F -f` reports `clean` on a file that still contains it — a check that cannot fail in the direction that matters, guarding the one constraint here that is unrecoverable once breached.
+- **An empty pattern list is exit 2, not exit 0.** A leak check with no patterns passes trivially and prints the same reassuring output as one that genuinely found nothing.
+
+It also never scans the aid itself, which contains every original by definition.
 
 - [ ] **Step 8: Commit**
 
