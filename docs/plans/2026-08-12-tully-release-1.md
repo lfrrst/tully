@@ -797,7 +797,7 @@ Create `skills/establish-the-truth/evals/evals.json`:
         "Writes the manifest with EXECUTED: no rather than skipping it",
         "Records the specific reason execution failed",
         "States plainly that the review is worth less and the reader must be told",
-        "Fabricates no figures",
+        "Leaves the FIGURES table empty rather than populating it from the changelog or documentation, and says the emptiness is itself part of what the review reports",
         "Names what downstream work becomes unverifiable"
       ],
       "files": []
@@ -917,6 +917,10 @@ Body, adapted from `$SRC/SKILL.md` Phase 1 (lines 25–39). It must contain:
 7. **The prevention half of the run-attribution failure**, stated as a rule: a figure recorded without a run identifier is not recorded, because a figure that was true of a different run is the single most common error a verification pass catches.
 
 Write proper prose, not bullet soup. The source is the model for register.
+
+**Define every downstream artifact you name, on first use.** This skill declares itself standalone, so it can run with no sibling skill loaded and no shared vocabulary established. Terms like *both books*, *the execution spine*, *the checklist*, and *the verification pass* mean nothing to a reader who arrived here directly, and two of them sit in the instruction that fires on the un-runnable path — where the reader most needs to be told plainly that the review is worth less. Gloss each in a clause on first use, and where an instruction defers a disclosure to a document that may never be written, say to make the disclosure in the answer *now* as well.
+
+This rule applies to all six skills, not only this one.
 
 - [ ] **Step 5: Run the validator to verify it passes**
 
