@@ -96,6 +96,13 @@ this module" sounds like a request for. The target lives in full in
   being anchored to the code and was written from memory.
 - **Private helpers included** where they carry real logic. They are frequently
   where the finding is, precisely because nobody reviews them.
+- **Module-level material, in its own subsections** — constants, hard-coded account
+  numbers, default configurations, sentinel values. It is what someone changes and
+  where a change does damage. It also sits outside every function an agent was asked
+  to document, which is what makes it the element of the target that goes missing
+  without looking missing: it belongs to no function's entry, so no entry reads
+  incomplete when it is absent. Name it in the dispatch rather than leave it to the
+  reference, which an agent working from its own system prompt is never handed.
 
 Then say the failure mode in words, because every criterion above can be met by
 something thin: **a section that describes a module in three good paragraphs and
@@ -111,11 +118,11 @@ that is the size of the artifact, not an overrun to be trimmed.
 A question about a single function needs no dispatch. Answer it in the reply, in the
 same four parts: what it does; how it does it, with `file.ext:NNN` citations
 verified by opening the file at that line; what it relies on, stated specifically —
-"assumes the column is named exactly `ACCOUNT`" is useful, "assumes valid input" is
-not; and what happens when that reliance is violated, named as one of raise,
-silently coerce, drop rows, or return empty. Which of the four it is decides what a
-reviewer has to do about it, so "handles it badly" is not an answer. The template
-does not change with scale — that is the point of having one.
+"assumes the column is named exactly X" is useful, "assumes valid input" is not; and
+what happens when that reliance is violated, named as one of raise, silently coerce,
+drop rows, or return empty. Which of the four it is decides what a reviewer has to
+do about it, so "handles it badly" is not an answer. The template does not change
+with scale — that is the point of having one.
 
 ## When there is no subagent tool
 
@@ -157,9 +164,15 @@ know that before they rely on it, which means before they leave this conversatio
   difference is what a reader needs in order to judge the spine. Invent nothing; in
   particular do not read a population off the documentation or a code comment into a
   cell a reader will take as measured. State the degradation at the top of your own
-  output — no population in this spine was measured, so no ordering claim in it has
-  been demonstrated against real data, only inferred from reading — and offer to
-  establish the baseline first, saying what it buys: a measured population at every
-  stage, and findings the hunt can reproduce rather than infer.
+  output, in this conversation — no population in this spine was measured, so no
+  ordering claim in it has been demonstrated against real data, only inferred from
+  reading — and write the same statement as the first thing in
+  `evidence/02-execution-spine.md`, above the table. Neither channel discharges the
+  other, because they have different readers: the answer is the only one the user
+  sees, and the file is the only one the finding hunt sees, since it opens the spine
+  without this conversation attached and would otherwise meet a column of
+  `not measured` cells with nothing to explain them. Offer to establish the baseline
+  first, in both places, and say what it buys: a measured population at every stage,
+  and findings the hunt can reproduce rather than infer.
 - *Hands back:* the paths written — `evidence/02-execution-spine.md` and one
   `evidence/02-map-<layer>.md` per layer.

@@ -42,6 +42,12 @@ the same order. Roughly one line citation per 50 words — below that you are
 writing from memory. A section that describes a module in three good paragraphs
 and moves on has failed, however well written it is.
 
+Module-level constants, hard-coded account numbers, default configurations and
+sentinel values get their own subsections. They are what someone changes, and
+they are where a change does damage — so they are finding-bearing in a way an
+ordinary function is not, and they are easy to walk past because they sit
+outside every function you were asked to document.
+
 If you are asked for the execution spine rather than a layer, produce a numbered
 table instead: stage, the line the stage is called at, what it adds, and the
 state of the data at that point including population sizes. Then three to five
