@@ -58,7 +58,8 @@ tully/
 │   └── marketplace.json                makes the repo itself installable
 ├── skills/
 │   ├── review-the-tool/
-│   │   └── SKILL.md
+│   │   ├── SKILL.md
+│   │   └── evals/evals.json
 │   ├── establish-the-truth/
 │   │   ├── SKILL.md
 │   │   ├── references/evidence-base.md
@@ -85,7 +86,7 @@ tully/
 │   ├── code-mapper.md
 │   └── fact-checker.md
 ├── commands/
-│   └── review-the-tool.md
+│   └── review.md
 ├── examples/worked-engagement/
 ├── docs/specs/
 ├── README.md
@@ -94,7 +95,7 @@ tully/
 └── .github/workflows/validate.yml
 ```
 
-`review-the-tool/` carries no `evals/` directory of its own for phase-level cases; its end-to-end eval lives in `skills/review-the-tool/evals/evals.json` alongside its trigger cases (see §14).
+The command is `review.md` rather than `review-the-tool.md` so that `/tully:review` and the skill `tully:review-the-tool` cannot be mistaken for each other in a transcript.
 
 ## 5. The six skills
 
@@ -102,7 +103,13 @@ Each `SKILL.md` declares four things beyond its instructions: what it needs, wha
 
 ### 5.1 `review-the-tool` — orchestrator
 
-Holds the doctrine, the attestation-versus-detection idea, the mode selection, the artifact classification and path registry, and the phase sequence. Writes the `evidence/` skeleton and, at the end, a short engagement record.
+Holds the doctrine, the attestation-versus-detection idea, mode selection, artifact classification and the path registry, and the phase sequence. Writes the `evidence/` skeleton, then dispatches. It does *not* write the project record — that belongs to `write-the-books` as the tail of phase 6, so that a `document`-mode run reached without the orchestrator still produces one.
+
+Two mechanics that must be explicit in the skill rather than left to inference:
+
+**Mode selection.** Infer the mode from the request — a request to document, explain or write a reference for a tool is `document`; a request to check, verify or fact-check an existing document is `verify`; anything about relying on, signing off or handing on output is `review`. State the inferred mode and what it will and will not produce *before* starting phase 1, and ask only where the request genuinely reads both ways. Inferring `document` when the caller wanted assurance is the costly direction, so resolve ambiguity toward `review`.
+
+**Artifact classification.** Inspect the artifact — file extensions, entry points, whether execution is deterministic — and match it against the §8 registry. Do not ask the user to classify it; do ask when inspection is genuinely ambiguous, and stop rather than guess when nothing matches.
 
 **Draft description trigger set** (the wide net; inherited from the monolith): review, validate, document, sign off on, get comfortable with, or hand to a reviewer any script, model, macro, conversion utility, calculator, allocation engine, ETL job, migration tool or reporting pipeline that produces client deliverables or feeds financial statements. Phrases: "review this tool", "can we rely on this", "document what this code does", "build a review checklist", "what should a human check", "the auditors will ask", "workpaper for this script", "validate this conversion". Also fires proactively when someone is about to ship output from a tool nobody has independently reviewed.
 
@@ -206,7 +213,7 @@ Both exist as agents rather than as prose because their governing instructions a
 
 ## 10. Command
 
-`commands/review-the-tool.md` — accepts an optional path and an optional mode, invokes the orchestrator. Its only job is to be a short way in.
+`commands/review.md`, invoked as `/tully:review` — accepts an optional path and an optional mode, and invokes the orchestrator. Its only job is to be a short way in.
 
 ## 11. Migration map
 
@@ -246,7 +253,7 @@ Most of the work in release 1 is writing these, not moving files.
 2. **`establish-the-truth/references/evidence-base.md`** — the manifest template. Implicit in the monolith's prose; now a contract, so required fields are enumerated, including `EXECUTED: yes|no` and a run identifier on every recorded figure.
 3. **`map-the-code/references/function-entry.md`** — the per-function template extracted so the skill and the agent cite one source rather than drifting apart.
 4. **`agents/code-mapper.md`**, **`agents/fact-checker.md`**.
-5. **`commands/review-the-tool.md`**.
+5. **`commands/review.md`**.
 6. **Six `evals/evals.json`.**
 7. **`check-the-facts/tests/test_citation_check.py`** — the script has no tests today and it exits 1 to gate a build.
 8. **README, LICENSE, CONTRIBUTING**, and `examples/worked-engagement/`.
