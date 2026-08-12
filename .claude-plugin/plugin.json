@@ -1,0 +1,9 @@
+{
+  "name": "tully",
+  "description": "Review the tools your numbers come out of. Produces a human review checklist and a function-level code review for any script, model, or pipeline whose output a firm has to stand behind, with every figure verified by execution rather than documentation.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "skills": "./skills",
+  "agents": "./agents",
+  "commands": "./commands"
+}

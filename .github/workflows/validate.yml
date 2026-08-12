@@ -1,0 +1,28 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dev dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Validate skill structure
+        run: python tools/validate_skills.py
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Assert the anonymisation review aid was not committed
+        run: |
+          if git ls-files --error-unmatch docs/anonymisation-review-aid.md 2>/dev/null; then
+            echo "::error::the anonymisation review aid is tracked; it must stay ignored"
+            exit 1
+          fi
+          echo "review aid is not tracked"

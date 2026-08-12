@@ -1,0 +1,14 @@
+{
+  "name": "tully",
+  "metadata": {
+    "description": "Assurance over tools that produce financial deliverables, including ones an AI designed.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "tully",
+      "description": "Six skills for reviewing a tool whose output a firm has to stand behind: execute it and measure what it really produces, document every function, hunt the defect classes these tools actually have, write the checklist and the code review, and adversarially fact-check both before anything is handed on.",
+      "source": "./"
+    }
+  ]
+}
