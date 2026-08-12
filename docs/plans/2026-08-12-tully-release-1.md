@@ -150,10 +150,14 @@ def test_missing_skill_md_fails(tmp_path):
 
 
 def test_name_mismatch_fails(tmp_path):
-    make_skill(tmp_path, "real-name", frontmatter_name="other-name")
+    # The fixture directory name must not contain any word the assertion checks
+    # for. The validator prints one result line per directory, so a fixture named
+    # "real-name" would satisfy `assert "name" in stdout` from its own name alone
+    # and the test would pass whether or not the mismatch was detected.
+    make_skill(tmp_path, "alpha", frontmatter_name="beta")
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "name" in r.stdout
+    assert "frontmatter name is 'beta', expected 'alpha'" in r.stdout
 
 
 def test_missing_description_fails(tmp_path):
@@ -199,11 +203,36 @@ def test_evals_skill_name_mismatch_fails(tmp_path):
 
 
 def test_empty_evals_list_fails(tmp_path):
-    make_skill(tmp_path, "empty-evals",
-               evals_body={"skill_name": "empty-evals", "evals": []})
+    # Named "barren" rather than "empty-evals" for the same reason as
+    # test_name_mismatch_fails: the assertion must not be satisfiable by the
+    # fixture's own directory name appearing in the result line.
+    make_skill(tmp_path, "barren", evals_body={"skill_name": "barren", "evals": []})
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "evals" in r.stdout
+    assert "has an empty evals list" in r.stdout
+
+
+def test_missing_evals_json_fails(tmp_path):
+    d = make_skill(tmp_path, "no-evals-file")
+    (d / "evals" / "evals.json").unlink()
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "evals/evals.json is missing" in r.stdout
+
+
+def test_unterminated_frontmatter_fails(tmp_path):
+    d = make_skill(tmp_path, "unterminated")
+    (d / "SKILL.md").write_text("---\nname: unterminated\ndescription: x\n",
+                                encoding="utf-8")
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "no terminated YAML frontmatter" in r.stdout
+
+
+def test_nonexistent_skills_dir_exits_two(tmp_path):
+    r = run(tmp_path / "absent")
+    assert r.returncode == 2
+    assert "no such skills directory" in r.stderr
 
 
 def test_reports_every_failure_not_just_the_first(tmp_path):
@@ -213,6 +242,8 @@ def test_reports_every_failure_not_just_the_first(tmp_path):
     assert r.returncode == 1
     assert "first-bad" in r.stdout and "second-bad" in r.stdout
 ```
+
+Three of these cover branches the first draft of this plan left untested — a missing evals file, unterminated frontmatter, and the exit-2 path for a directory that does not exist. That last one is the branch a fresh clone actually hits, which is why Step 8 below commits `skills/.gitkeep`.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -352,7 +383,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `python -m pytest tools/tests/test_validate_skills.py -v`
-Expected: 11 passed. If `test_reports_every_failure_not_just_the_first` fails, the validator is returning early — it must accumulate across skills.
+Expected: 14 passed. If `test_reports_every_failure_not_just_the_first` fails, the validator is returning early — it must accumulate across skills.
 
 - [ ] **Step 5: Write the manifests**
 
@@ -453,17 +484,31 @@ Then create `docs/anonymisation-review-aid.md` with a header explaining what it 
 
 Read the originals from `$SRC` at the lines given in the Global Constraints replacement table. Do not transcribe them into any file other than this one.
 
-- [ ] **Step 9: Verify the validator runs clean against an empty skills tree**
+- [ ] **Step 9: Commit `skills/.gitkeep` so a fresh checkout has the directory**
 
-Run: `mkdir -p skills && python tools/validate_skills.py`
+```bash
+mkdir -p skills && touch skills/.gitkeep
+python tools/validate_skills.py
+```
+
 Expected: `0 skills checked, 0 problems`, exit 0. This is the state Task 3 starts from.
+
+`.gitkeep` is not decoration. **Git does not track empty directories**, so without it `skills/` exists on the machine that ran this step and is absent from the commit — and CI's `python tools/validate_skills.py` hits the exit-2 missing-directory branch on a fresh checkout. The failure is invisible locally, because the local `skills/` is sitting right there untracked. Verify the fix against the commit rather than the working tree:
+
+```bash
+git ls-tree -r HEAD --name-only | grep "^skills/"
+```
+
+Expected: `skills/.gitkeep`. An empty result means CI will be red at this commit.
+
+Leaving the validator's exit 2 for a missing directory is correct and stays — it is the right answer when someone passes a bad `--skills-dir`. The defect was never the exit code; it was shipping a commit whose default invocation triggers it.
 
 - [ ] **Step 10: Commit**
 
 ```bash
 git status --short docs/
 # expected: docs/anonymisation-review-aid.md does NOT appear
-git add tools .claude-plugin .github .gitignore
+git add tools .claude-plugin .github .gitignore skills/.gitkeep
 git commit -m "$(cat <<'EOF'
 Add repo scaffold, plugin manifests, and the skill validator
 
@@ -676,7 +721,7 @@ If a test reveals a defect, fix the script, re-run, and describe the defect in t
 - [ ] **Step 4: Run the full suite to confirm nothing else broke**
 
 Run: `python -m pytest -q`
-Expected: all tests pass — 11 validator tests plus 12 citation tests.
+Expected: all tests pass — 14 validator tests plus 12 citation tests.
 
 - [ ] **Step 5: Commit**
 
@@ -2055,3 +2100,13 @@ The first draft carried a substitution table listing every original client value
 - CI asserts the invariant that protects the values — that the aid is untracked — rather than grepping for them. The leak check runs locally, builds its pattern list from the aid, and guards against an empty pattern file, since a leak check with no patterns passes trivially and prints the same output as one that genuinely found nothing.
 
 That last point is the plugin's own "checks that cannot fail" pattern, caught in the plan for the plugin that catalogues it.
+
+**5. Amendments after Task 1's review.** Recorded here so the plan's history is legible rather than looking as though it was right first time.
+
+Task 1's code reviewer found three defects in code this plan supplied verbatim, all confirmed by execution and all fixed by amendment with the author's ruling:
+
+- **`skills/` was absent from Task 1's commit.** Git does not track empty directories, so the validator's exit-2 missing-directory branch is exactly what CI hits on a fresh checkout — while the local run passes, because the untracked directory is sitting right there. Step 9 now commits `skills/.gitkeep` and verifies against `git ls-tree` rather than the working tree.
+- **Three validator failure branches had no test.** Missing `evals.json`, unterminated frontmatter, and the exit-2 path above. Now covered, taking the suite from 11 tests to 14.
+- **Two tests passed for a reason unrelated to what they checked.** The validator prints one result line per directory, so a fixture named `real-name` satisfied `assert "name" in stdout` from its own directory name, and `empty-evals` satisfied `assert "evals" in stdout` the same way. Both fixtures are renamed and both assertions now match distinctive message text.
+
+The third is `finding-patterns.md` §9 — an assertion that cannot discriminate — in the test suite of the plugin that catalogues it. It is worth stating plainly that the catalogue caught its own author, and that a reviewer reading the diff caught it where the passing suite did not.
