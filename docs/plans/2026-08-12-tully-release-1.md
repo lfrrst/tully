@@ -1596,7 +1596,11 @@ Create `skills/check-the-facts/evals/evals.json`:
 - [ ] **Step 2: Run the validator to verify it fails**
 
 Run: `python tools/validate_skills.py`
-Expected: exit 1. Note that `check-the-facts` already exists as a directory from Task 2 with `scripts/` and `tests/` but no `SKILL.md` and no `evals/`, so before Step 1 the validator reports two problems for it and after Step 1 exactly one — `check-the-facts: SKILL.md is missing`.
+Expected: exit 1, reporting **exactly one** problem — `check-the-facts: SKILL.md is missing`.
+
+`check-the-facts` has existed as a directory since Task 2, holding `scripts/` and `tests/` but no `SKILL.md` and no `evals/`. It reports one problem rather than two because `check_skill` returns immediately when `SKILL.md` is absent, so the `evals/evals.json` check is never reached. The count is therefore one both before and after Step 1, and writing the evals file does not change it. Verified by execution at Task 2.
+
+This is the expected state from Task 2 onward and must not be silenced with a stub `SKILL.md` or a placeholder `evals.json`.
 
 - [ ] **Step 3: Write the agent**
 
@@ -2088,7 +2092,7 @@ No gaps found. Spec §14's requirement of "one end-to-end eval on `review-the-to
 
 Two issues found and fixed while reviewing:
 
-- Task 7 Step 2's expected validator output originally said only `SKILL.md is missing`, but `check-the-facts` already exists as a directory from Task 2 without `evals/`, so the validator reports two problems before Step 1 and one after. Step 2 now says so.
+- Task 7 Step 2's expected validator output needed to account for `check-the-facts` already existing as a directory from Task 2 without `SKILL.md` or `evals/`. My first correction to it claimed two problems before Step 1 and one after; that was also wrong, and Task 2's implementer caught it. `check_skill` returns early on a missing `SKILL.md`, so the count is exactly one throughout and writing the evals file does not change it. Verified by execution and corrected again.
 - The validator's body-extraction line originally read `text[...] if fm else text`, which is dead code — the function has already returned when `fm` is None. Simplified to the unconditional slice.
 
 **4. Confidentiality of the plan itself.** This check is not in the writing-plans template and was added because the first draft of this plan failed it.
