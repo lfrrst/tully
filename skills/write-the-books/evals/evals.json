@@ -1,0 +1,47 @@
+{
+  "skill_name": "write-the-books",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Research is done — evidence base, maps, spine, findings all written. Write it up.",
+      "expected_output": "Should produce both books, because the checklist's compensating procedures exist only because the code review found the gaps they compensate for. Should organise the checklist by audit assertion, using both the transaction set and the balance set where the deliverable is both an event and a position, and should name the population each set tests so the two halves do not restate each other. Should rate every test T-INDEP, T-WEAK or NONE by where the control's expectation comes from. Should quote the reference figure in every procedure involving a count or total, attributed to its run. Should propose materiality against the deliverable's own units before the tests and flag it for partner agreement. Should state that the output is an internal working paper and not an attest report.",
+      "assertions": [
+        "Produces both books rather than one",
+        "Organises the checklist by audit assertion",
+        "Names the population each assertion set tests",
+        "Rates every test T-INDEP, T-WEAK or NONE",
+        "Bases the rating on where the control's expectation comes from",
+        "Quotes reference figures attributed to a named run",
+        "Proposes materiality before the tests and flags it for agreement",
+        "Marks compensating procedures",
+        "States the output is a working paper, not an attest report"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I just need the checklist, not the code review. The code's fine.",
+      "expected_output": "Should produce the checklist as asked. Should say once, without labouring it, that the research phase still runs in full because a checklist written without reading the code is a generic checklist. Should not produce a checklist consisting only of compensating procedures — the ordinary tests are needed too: does the total tie, is the period right, is the sign convention right.",
+      "assertions": [
+        "Produces the checklist as asked rather than insisting on both",
+        "States once that the research phase still runs in full",
+        "Includes ordinary tests, not only compensating procedures",
+        "Does not labour the objection after making it"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Write the code review. We couldn't run the tool — no test data.",
+      "expected_output": "Should write the code review with a statement at the top of section 1 that the tool was not executed and that no figure in the document was verified by execution. Should mark every figure unverified rather than omitting figures or presenting documented figures as measured. Should omit the findings section and mark it explicitly not-performed rather than leaving it blank or filling it with speculation. Should state that this is documentation and not assurance.",
+      "assertions": [
+        "States at the top that the tool was not executed",
+        "Marks every figure unverified rather than omitting them",
+        "Presents no documented figure as measured",
+        "Marks the findings section not-performed rather than leaving it blank",
+        "States that the document is documentation, not assurance"
+      ],
+      "files": []
+    }
+  ]
+}
