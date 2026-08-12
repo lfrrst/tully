@@ -271,7 +271,7 @@ Facts about the *review* — the count of the tool's own assertions that passed,
 
 Client-derived data changes: client and system names become a consistent fictional pair; monetary amounts are rounded and altered; account and type codes are substituted. Defect *mechanics* are preserved exactly — a record correctly flagged unresolvable, whose emit step applies the open context to it anyway, so the field that failed to resolve holds the preceding sibling's value — because the mechanics are what a reader needs in order to recognise the pattern in their own tool. Magnitudes are preserved to order of magnitude, because a defect worth two million dollars and one worth two hundred are different findings.
 
-"In the reference engagement" becomes "in the engagement this catalogue was written from" — provenance signalled, identity removed.
+The phrase that introduces the source engagement becomes "in the engagement this catalogue was written from" — provenance signalled, identity removed. The original phrase is not quoted here, so that the aid-derived leak check returns genuinely clean rather than carrying a permanent known false positive. A check a reader learns to wave through has stopped being a check, which is a pattern this plugin catalogues.
 
 ### Affected files
 
