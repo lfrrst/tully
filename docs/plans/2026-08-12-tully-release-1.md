@@ -15,6 +15,23 @@
 Every task's requirements implicitly include this section.
 
 - **Python floor: 3.10.** `citation_check.py` uses `Path | None` under `from __future__ import annotations`. Standard library only at runtime; `pytest` is a dev dependency.
+
+- **Environment prerequisite: a real Python interpreter must be on `PATH` before Task 1.** This was an unstated assumption in the plan's first draft and it blocked Task 1 on the machine this was written on.
+
+  On Windows, `python` and `python3` frequently resolve to zero-byte Microsoft Store *app execution aliases* rather than an interpreter. The trap that matters: **the stub prints "Python was not found" and exits 0.** A step that runs `python -m pytest` against the stub therefore looks like a pass — a check that cannot fail, in the build for the plugin that catalogues them. Verify the interpreter before relying on any test result:
+
+  ```bash
+  python --version   # must print a version; "Python was not found" means the stub
+  which python       # must NOT be under .../Microsoft/WindowsApps/
+  ```
+
+  Where a real interpreter is installed but shadowed by the stubs, prepend it per shell invocation rather than editing persistent `PATH`:
+
+  ```bash
+  export PATH="<python-dir>:<python-dir>/Scripts:$PATH"
+  ```
+
+  Every local command in this plan that begins `python` assumes that has been done. **CI is unaffected** — it runs on `ubuntu-latest` where `actions/setup-python` puts a real interpreter on `PATH`, so the workflow keeps bare `python` and must not be changed to a local path.
 - **No remote may be added and nothing may be pushed.** Spec D11. The repo stays local until the author clears the publication gate. No task performs `git remote add`, `git push`, or repository creation.
 - **Client-derived content is never committed, not even once.** Spec D12. Anonymise in the working copy before the first `git add` of any affected file.
 - **This plan never states an original client value.** It states only replacements. That is deliberate and it is a constraint on the plan itself, not only on the repo: this file is committed and will be published, so a substitution table listing the originals here would publish exactly what the anonymisation removes. The originals live in two places, neither of which is ever committed — `$SRC`, which the implementer reads directly, and `docs/anonymisation-review-aid.md`, which is git-ignored.
