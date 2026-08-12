@@ -38,8 +38,11 @@ for having one.
    different period, a different population. Two runs give you a comparison; one
    gives you an anecdote. Give every run an identifier before you start it and
    write its output to its own folder under that identifier. These runs are the
-   evidence base for every number in both books, and both books should say so on
-   their first page.
+   evidence base for every number in both books the full review produces — the
+   human review checklist a person works through with the output open beside
+   them, and the function-level code review — and both should say so on their
+   first page. Where this phase runs on its own and no book follows, they are the
+   evidence base for whatever you report instead, on the same terms.
 
 4. **Measure the output yourself.** Do not read the tool's summary of its output
    — open the files and count. Row counts, totals, how many rows are blank in a
@@ -55,7 +58,8 @@ for having one.
    unresolved.** A warning naming a mechanism, a figure that does not match the
    documentation, a file the docs say exists that does not. Record each one —
    what the run said, and why it could not be tied to anything — and then stop.
-   Do not chase it to an answer now. Resolution is the finding hunt's job; an
+   Do not chase it to an answer now. Resolution belongs to the finding hunt, the
+   later phase that works a catalogue of known defect classes against the code; an
    observation resolved here in passing arrives downstream as an assertion nobody
    can re-examine, while an observation recorded open stays a thread anyone can
    pull. In the engagement this phase was written from, a warning citing a
@@ -67,10 +71,12 @@ for having one.
 ## Every figure names its run
 
 **A figure recorded without a run identifier is not recorded.** Quoting a figure
-that was true of a different run is the single most common error a verification
-pass catches, and it is cheap to prevent and expensive to find later: by the time
-the figure is sitting in a checklist procedure, the run folder that would
-contradict it is one of several and nobody remembers which one it came from. So
+that was true of a different run is the single most common error caught by the
+verification pass — the review's last phase, which fact-checks the finished books
+adversarially by recomputing what they claim. It is cheap to prevent here and
+expensive to catch there: by the time the figure is sitting in a checklist
+procedure, the run folder that would contradict it is one of several and nobody
+remembers which one it came from. So
 attribute every figure to its run at the moment you write it down, not afterwards
 from memory. Where a figure differs between runs, state both rather than picking
 the one that reads better — a range across two runs is information about the
@@ -89,30 +95,47 @@ use.
 No data, no environment, a licensed dependency the firm does not have, a hardware
 requirement. Write the manifest anyway, with `EXECUTED: no` and a
 `REASON-NOT-EXECUTED` that names the specific blocker rather than reporting that
-the tool would not run. Then say so plainly at the top of both books and mark
-every figure in them unverified. A review that cannot run the thing is worth much
-less, and the reader must know that before they rely on it.
+the tool would not run.
 
-Fabricate nothing. In particular, do not promote a documented figure to a
-measured one by putting it in a `FIGURES` table — the table is for figures you
-took, so if nothing was executed it stays empty, and its emptiness is itself part
-of what the review reports.
+Then say it plainly in your own answer, now, at the top: nothing here was
+verified by execution, and a review that cannot run the thing is worth much less.
+Say it again at the top of both books, when there are books, and mark every
+figure in them unverified. The disclosure in the answer is not discharged by the
+promise of the one in the books — this phase can be the only thing that ever
+runs, and a disclosure deferred to a document nobody writes is a disclosure
+nobody makes. The reader has to know before they rely on it, which means before
+they leave this conversation.
 
-Then name what this makes unverifiable, so the reader learns it from the first
-page rather than discovering it in the middle of relying on something:
+Fabricate nothing. In particular, do not fill a `FIGURES` table from the
+changelog, the README or the documentation — that is exactly the substitution the
+doctrine forbids, and a documented figure sitting in a measured figure's column
+is indistinguishable from evidence by the time anyone reads it. The table is for
+figures you took yourself, so if nothing was executed it stays empty, and say
+that the emptiness is itself part of what the review reports rather than leaving
+a reader to wonder whether the measuring was merely forgotten.
 
-- **The execution spine has no measured population.** The stages can still be
-  listed in the order the code calls them, but what the data actually looked like
-  at each point is unknown, and ordering defects are hardest to see without it.
+Then name what this makes unverifiable, in the answer as well as in anything
+written later, so the reader learns it up front rather than in the middle of
+relying on something. Four phases follow this one — mapping the code function by
+function, hunting for defects, writing the two books, and fact-checking them
+adversarially — and each of them loses something specific and worth naming:
+
+- **The execution spine has no measured population.** The spine is the ordered
+  list of the stages the code runs, each with the state of the data at that point.
+  The stages can still be listed in the order the code calls them, but what the
+  data actually looked like at each one is unknown, and ordering defects — a check
+  that runs before the thing it checks — are hardest to see without it.
 - **No finding can be reproduced.** Every one becomes an inference from reading
   rather than a demonstrated defect. That is a materially weaker claim and has to
   be worded as one — no sentence in the output may begin "Verified:".
 - **The checklist's procedures lose their reference figures.** A reviewer working
-  the checklist has no measured value to compare their own result against, so
-  each affected test silently becomes their job to baseline rather than to check.
+  through the checklist has no measured value to compare their own result against,
+  so each affected test silently becomes their job to baseline rather than to
+  check, which is a different and much larger job than the one they agreed to.
 - **The verification pass cannot re-derive anything.** Its strongest check is
   recomputing every quantitative claim from the run folders, and there are no run
-  folders. The claims in the document will have been read, not recomputed.
+  folders. The claims in the books will have been re-read, not recomputed, and
+  re-reading your own prose finds nothing.
 
 If the blocker is something the user can clear — a driver, a data extract, a
 machine with access to the source system — say so and offer to establish the
