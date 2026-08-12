@@ -285,7 +285,11 @@ A scan of the source material found client-derived content in three files, not t
 
 `SKILL.md` and `references/checklist-book.md` are clean and may be split verbatim. Substitutions must be *consistent across all three files* — a fictional source system and target system chosen once and used everywhere — because inconsistent replacements read as carelessness and invite a reader to work out which one was real.
 
-Verification of this pass is a required implementation step, not a best effort: a grep for client names, the specific substituted codes, and the original amounts across the whole repo must return nothing before publication.
+Verification of this pass is a required implementation step, not a best effort: a grep for client names, the substituted codes, and the original amounts across the whole repo must return nothing before publication.
+
+**That grep runs locally and never lives in CI, and no committed file may contain the values it searches for** — including this spec and the implementation plan. A workflow or a document that greps for a client value contains that value, and both are published, so such a check would leak precisely what the anonymisation removed. The pattern list is therefore built at run time from the git-ignored review aid below, and CI asserts only the invariant that protects it: that the aid is untracked.
+
+The check must also guard against an empty pattern list. A leak check with no patterns passes trivially and prints the same output as one that genuinely found nothing — which is the "checks that cannot fail" class from this plugin's own catalogue, and an unusually poor place to commit it.
 
 ### Publication gate
 
