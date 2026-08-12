@@ -49,6 +49,7 @@ The full subject — governance over AI-designed accounting workflows — is lar
 | D9 | Working folder is `evidence/` | The word the doctrine already uses, and safe if a firm archives the folder into a client file |
 | D10 | Spec lives at `docs/specs/`, not `docs/superpowers/specs/` | Public repo; the default path would publish internal tooling naming into the docs tree |
 | D11 | Publication is gated on author review of the anonymised material; the repo stays local until then | A mechanical grep only catches values someone thought to search for. Confidentiality failures are not recoverable once pushed, so the gate is a hard stop rather than a checklist item (§13) |
+| D12 | Client-derived content is anonymised before its first commit and never enters git history | Git history survives a later push, so an "anonymise it afterwards" commit leaks the original blobs permanently. Supersedes the earlier intent of reviewing the anonymisation as a diff (§13) |
 
 ## 4. Repository layout
 
@@ -272,6 +273,18 @@ Client-derived data changes: client and system names become a consistent fiction
 
 "In the reference engagement" becomes "in the engagement this catalogue was written from" — provenance signalled, identity removed.
 
+### Affected files
+
+A scan of the source material found client-derived content in three files, not the one this section originally assumed. The catalogue is wider than the obvious case study, and the widening is the point: two of the three are incidental mentions inside otherwise generic material, which is exactly the kind of leak a grep for known values does not find.
+
+| File | Line | What is client-derived |
+|---|---|---|
+| `references/finding-patterns.md` | 81 | The worked case study: row count, gross amount, both account codes, and the two source row numbers |
+| `references/code-review-book.md` | 132 | A function name naming the client's source accounting system, used as an incidental example of documentation depth |
+| `scripts/citation_check.py` | 30, 48 | A docstring example naming the target system and a segment value, and a second example carrying a real module path from the client's tool |
+
+`SKILL.md` and `references/checklist-book.md` are clean and may be split verbatim. Substitutions must be *consistent across all three files* — a fictional source system and target system chosen once and used everywhere — because inconsistent replacements read as carelessness and invite a reader to work out which one was real.
+
 Verification of this pass is a required implementation step, not a best effort: a grep for client names, the specific substituted codes, and the original amounts across the whole repo must return nothing before publication.
 
 ### Publication gate
@@ -280,7 +293,7 @@ Verification of this pass is a required implementation step, not a best effort: 
 
 Two requirements follow from that, and they belong in the plan:
 
-1. The anonymisation is performed as its own commit, touching nothing else, so the gate has a clean diff to review rather than a mixed changeset.
+1. **Client-derived content is never committed, not even once.** Each affected file is anonymised in the scratch copy and only the anonymised version is ever added to git. An earlier draft of this section called for anonymisation as its own commit so the gate could review a clean diff; that is wrong, because git history survives and a later push would carry the un-anonymised blobs regardless of the state of the tip. There is no acceptable commit containing client data, so the author's review is served by the substitution aid below rather than by a diff.
 2. Alongside it, a review aid listing every substitution — original value, replacement, and the file and line of each occurrence — written to `docs/` and **git-ignored**, since it would otherwise reconstruct exactly what the anonymisation removed. The aid is for the author's review and is deleted once the gate clears.
 
 The mechanical grep is necessary and not sufficient: it catches values someone remembered to search for, and the gate exists to catch the ones nobody thought of — a defect described in enough detail to identify the client without naming it, a magnitude paired with an industry, a file path in an example.
