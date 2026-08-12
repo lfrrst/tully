@@ -169,11 +169,13 @@ Owns the *detection* half of the "figure from a different run" failure.
 
 | Mode | Runs | Produces | Rule that governs it |
 |---|---|---|---|
-| `document` | establish → map | Code review book only | Still executes where it can, because a documentation claim about an edge case is worth more when it says "verified:". Tolerates `EXECUTED: no` far more gracefully than `review`. Must state on page one that it is documentation and not assurance |
+| `document` | establish → map → write | Code review book only | Still executes where it can, because a documentation claim about an edge case is worth more when it says "verified:". Tolerates `EXECUTED: no` far more gracefully than `review`. Must state on page one that it is documentation and not assurance |
 | `review` (default) | all six phases | Both books | The full engagement |
 | `verify` | `check-the-facts` alone | An error list | Works against any document carrying `file.ext:NNN` citations, including one a previous reviewer or another AI wrote, and including the previous version of your own book |
 
 The books are produced together by default because they need each other: the checklist's compensating procedures exist only because the code review found the gaps they compensate for. If the user asks for only one, produce that one — but still do the research phase in full, because a checklist written without reading the code is a generic checklist.
+
+**Erratum, found at Task 8.** This table originally described `document` mode as "establish → map", which cannot be right: the mode produces a code review book, and the phase that writes books is `write-the-books`. The mode runs three skills, with `write-the-books` limited to the code review and its findings section marked not-performed. The shorthand named the research phases and silently dropped the one that produces the deliverable — the kind of gap that survives because the "Produces" column looks correct beside it.
 
 ## 7. The engagement folder
 
