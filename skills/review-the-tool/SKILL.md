@@ -87,7 +87,7 @@ and decline.
 | Mode | Phases | Produces | The rule that governs it |
 |---|---|---|---|
 | `document` | `establish-the-truth`, `map-the-code`, then `write-the-books` for the code review alone | the function-level code review | Still executes the tool wherever it can, because a documentation claim about an edge case is worth more when it can say verified. Tolerates `EXECUTED: no` far more gracefully than `review` does. The finished document states on page one that it is documentation and not assurance |
-| `review` (default) | all six: `establish-the-truth`, `map-the-code`, `hunt-the-findings`, `write-the-books`, `check-the-facts`, then the project record | both books, over an evidence trail every figure in them is quoted from | The full engagement |
+| `review` (default) | all five: `establish-the-truth`, `map-the-code`, `hunt-the-findings`, `write-the-books`, `check-the-facts` | both books, over an evidence trail every figure in them is quoted from, and — only where a project or knowledge base is attached to the session — the short project record `write-the-books` saves beside them as the tail of its own run, giving what was produced, the reference runs and their key figures, the findings that matter most, and anything it corrects | The full engagement |
 | `verify` | `check-the-facts` alone | an error list per document | Works against any document carrying `file.ext:NNN` citations — one a previous reviewer wrote, one another AI wrote, or the previous version of your own book |
 
 Say what `document` mode leaves out, in these terms: no checklist, no finding hunt, no
@@ -242,7 +242,14 @@ findings: a class with no verdict is indistinguishable in the finished book from
 no defect, and the reader will assume the flattering one.
 
 **Phase 4 — `write-the-books`.** Turns the evidence files into the two deliverables, each
-named for the client, the tool and the tool's version. Hands back the book paths.
+named for the client, the tool and the tool's version. Hands back both book paths, or the
+path to the one book where only one was asked for. Where a project or knowledge base is
+attached to the session, that skill also saves **the project record** as the tail of its
+own run: a short note beside the books giving what was produced, the reference runs and
+their key figures, the findings that matter most, and anything that corrects an earlier
+document in the project. The condition is real and belongs in what you tell the caller — a
+run with nothing attached produces no record, and promising one anyway promises a file that
+will not exist.
 
 **Phase 5 — `check-the-facts`.** This is **the verification pass** — the review's last phase,
 which fact-checks the finished books adversarially by recomputing what they claim. It
@@ -254,8 +261,6 @@ this phase to a deadline — it is what stands between a document whose first fi
 when a client's developer checks it and one that loses the reader on page two and never gets
 them back.
 
-**Phase 6 — the project record.** The tail of `write-the-books`, not yours. See below.
-
 Run them in order, and do not reorder to buy time. Each phase spends what the one before
 produced, and the dependencies are hard rather than soft. The ordering-defect classes in
 phase 3 are comparisons between two stages of the spine, so a hunt run before phase 2 cannot
@@ -266,12 +271,11 @@ wrong figure passes.
 
 ## What this skill does not do
 
-It does not write the project record — the short record saved beside the books naming what
-was produced, the reference runs and their key figures, the findings that matter most, and
-anything that corrects an earlier document in the project. `write-the-books` owns it,
-deliberately: that skill can be invoked directly in `document` mode without this one ever
-running, and a record produced by the orchestrator would be missing from exactly the runs
-that never had one.
+It does not write the project record. `write-the-books` owns it, deliberately: that skill
+can be invoked directly in `document` mode without this one ever running, and a record
+produced by the orchestrator would be missing from exactly the runs that never had one. Nor
+is it a guaranteed output of a review, so do not describe it as one — it is written only
+where a project or knowledge base is attached to the session.
 
 It writes no deliverable and it measures nothing. Its entire output is four decisions, two
 directories and five dispatches — and, where nothing in the registry matches, one refusal
