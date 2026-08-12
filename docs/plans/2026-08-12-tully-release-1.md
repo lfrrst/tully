@@ -1138,6 +1138,12 @@ the same order. Roughly one line citation per 50 words — below that you are
 writing from memory. A section that describes a module in three good paragraphs
 and moves on has failed, however well written it is.
 
+Module-level constants, hard-coded account numbers, default configurations and
+sentinel values get their own subsections. They are what someone changes, and
+they are where a change does damage — so they are finding-bearing in a way an
+ordinary function is not, and they are easy to walk past because they sit
+outside every function you were asked to document.
+
 If you are asked for the execution spine rather than a layer, produce a numbered
 table instead: stage, the line the stage is called at, what it adds, and the
 state of the data at that point including population sizes. Then three to five
@@ -1164,7 +1170,7 @@ Body, from `$SRC/SKILL.md:41-64`. It must contain:
 1. **The layer split**: three to five groups along the layers the code actually has, with the typical grouping named (input and configuration; transformation core; orchestration and controls; output, interface and tests) and an instruction to adapt to what is there.
 2. **Parallel dispatch** of one `code-mapper` agent per group, and a pointer to `references/function-entry.md` as the shared template.
 3. **The execution spine** as a distinct deliverable from one agent, with why it matters: nothing else in the tool makes sense without knowing what has and has not yet happened at a given moment, and ordering defects are only visible against it.
-4. **The depth expectation stated explicitly**, with a pointer to the reference, and the sentence that a section describing a module in three good paragraphs has failed however well written it is.
+4. **The depth expectation stated explicitly**, with a pointer to the reference, and the sentence that a section describing a module in three good paragraphs has failed however well written it is. **Name module-level material as part of it** — constants, hard-coded account numbers, default configurations, sentinel values, each getting its own subsection. It is where a change does damage, it sits outside every function an agent was asked to document, and it is the one element of the depth target that would otherwise live only in the reference, where an agent working from its own system prompt never sees it.
 5. **The sequential fallback** for no subagent tool, carried over in full: work the layers yourself in the same order, one at a time, writing each section to its own file before starting the next; do not hold four in context at once because quality collapses in the last one; check your own section against the depth target before moving on; after the last section re-read the execution spine against the finished sections hunting specifically for ordering defects; and say in §1 of the finished document that the review was performed sequentially, because it changes what a reader should expect of its uniformity.
 6. **The standalone contract**:
    - *Needs:* `evidence/01-evidence-base.md`, for the population column of the spine.
