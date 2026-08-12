@@ -1268,10 +1268,26 @@ Create `skills/hunt-the-findings/evals/evals.json`:
         "Does not simply agree with the user's inference"
       ],
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Nobody mapped the ordering — there's no execution spine. Work the catalogue anyway.",
+      "expected_output": "Should work the classes it can and produce findings rather than refusing. Should name the classes it could not attempt, specifically and by catalogue section, rather than reporting a clean sweep — a catalogue silently worked at half coverage reads identically to one worked fully. Should disclose the gap both in its own answer and at the top of evidence/03-findings.md, and say that neither channel discharges the other, because the verification pass opens the file without the conversation attached and an unmarked gap reads there as ground covered and found clean. Should offer to build the spine first and say what it would add.",
+      "assertions": [
+        "Produces findings rather than refusing",
+        "Names the classes it could not attempt, by catalogue section",
+        "Does not report or imply a clean sweep across all twelve classes",
+        "Discloses the gap in its own answer and at the top of evidence/03-findings.md",
+        "States that neither channel discharges the other, and why the readers differ",
+        "Offers to build the execution spine first and says what it would add"
+      ],
+      "files": []
     }
   ]
 }
 ```
+
+The fourth eval exists because the degraded mode is the requirement most likely to rot silently: a skill that quietly works nine of twelve classes produces output indistinguishable from one that worked all twelve. Both sibling skills give their degraded path an eval; this one needs the same, and it is the coverage Task 7's verification pass depends on.
 
 - [ ] **Step 2: Run the validator to verify it fails**
 
@@ -1383,6 +1399,76 @@ def test_empty_pattern_list_is_an_error_not_a_pass(tmp_path):
 def test_missing_aid_is_an_error(tmp_path):
     r = run(tmp_path / "absent.md", tmp_path)
     assert r.returncode == 2
+    # Assert the message, not just the code. Exit 2 is also what a deleted script
+    # and any argparse usage error produce, so a bare returncode check passes with
+    # the tool absent or its flag renamed — it cannot fail for the right reason.
+    assert "no such aid file" in r.stderr
+
+
+def test_leak_inside_hash_prefixed_comment_lines_is_found(tmp_path):
+    # The case that matters most: this repo's convention is multi-line, #-prefixed
+    # fixture comments, and that is exactly where this project's one real leak lived.
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "mod.py").write_text("# the defect covered 63 rows\n# carrying $7M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "mod.py")
+    assert r.returncode == 1
+    assert "mod.py:1" in r.stdout
+
+
+def test_leak_inside_a_blockquote_is_found(tmp_path):
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "doc.md").write_text("> the defect covered 63 rows\n> carrying $7M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+
+
+def test_match_is_case_insensitive(tmp_path):
+    aid = write_aid(tmp_path, [("Ledgerline Fund Accounting", "the source system")])
+    (tmp_path / "doc.md").write_text("migrated from ledgerline fund accounting\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+
+
+def test_a_target_that_does_not_exist_is_an_error(tmp_path):
+    # A typo'd path must not read as a clean tree. This is the fail-open case.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    r = run(aid, tmp_path / "no-such-directory")
+    assert r.returncode == 2
+    assert "no such target" in r.stderr
+
+
+def test_scanning_zero_files_is_an_error(tmp_path):
+    # An empty directory means the gate proved nothing; saying "clean" would be a lie.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    r = run(aid, empty)
+    assert r.returncode == 2
+    assert "no files" in r.stderr
+
+
+def test_file_count_is_reported(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    (tmp_path / "a.md").write_text("fine\n", encoding="utf-8")
+    (tmp_path / "b.md").write_text("also fine\n", encoding="utf-8")
+    r = run(aid, tmp_path)
+    assert r.returncode == 0, r.stdout
+    # The pattern count alone cannot show the gate scanned anything.
+    assert "2 files" in r.stdout
+
+
+def test_aid_header_row_is_not_treated_as_a_pattern(tmp_path):
+    aid = tmp_path / "aid.md"
+    aid.write_text("| Original value | replacement | file | line |\n|---|---|---|---|\n"
+                   "| SECRETVALUE | x | f.md | 1 |\n", encoding="utf-8")
+    (tmp_path / "doc.md").write_text("this mentions the Original value column\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    assert "1 patterns" in r.stdout
 
 
 def test_directory_target_is_walked(tmp_path):
@@ -1396,16 +1482,30 @@ def test_directory_target_is_walked(tmp_path):
 
 
 def test_the_aid_itself_is_never_scanned(tmp_path):
-    # The aid contains every original by definition; scanning it always "leaks".
+    # The aid contains every original by definition; scanning it would always "leak".
+    # A second, clean file is present deliberately: without it the run scans nothing
+    # and trips the only-the-aid guard, so the test would pass for the wrong reason.
     aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
-    r = run(aid, aid.parent)
+    (tmp_path / "clean.md").write_text("nothing sensitive\n", encoding="utf-8")
+    r = run(aid, tmp_path)
     assert r.returncode == 0, r.stdout
+    assert "1 files" in r.stdout
+
+
+def test_only_the_aid_in_scope_is_an_error(tmp_path):
+    # If the aid is the only file in scope, nothing was checked and "clean" would lie.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    r = run(aid, tmp_path)
+    assert r.returncode == 2
+    assert "only the aid" in r.stderr
 ```
 
 Run it and watch it fail:
 
 `python -m pytest tools/tests/test_leak_check.py -v`
-Expected: all 7 FAIL — `tools/leak_check.py` does not exist.
+Expected: all 15 FAIL — `tools/leak_check.py` does not exist.
+
+Watch one of them specifically. `test_missing_aid_is_an_error` asserts both the exit code **and** the stderr message, because exit 2 is what a deleted script and any argparse usage error also produce — a bare returncode check there passes with the tool absent, which makes it the one test in the file that cannot fail for the right reason.
 
 Then create `tools/leak_check.py`:
 
@@ -1413,16 +1513,26 @@ Then create `tools/leak_check.py`:
 #!/usr/bin/env python3
 """Search a tree for original client values listed in the anonymisation review aid.
 
-Whitespace-insensitive by design. Markdown is hard-wrapped, so an original value
-can straddle a newline in the anonymised prose; a line-based search would report
-clean on a file that still contains it. Both the patterns and the file contents
-are collapsed to single-spaced text before matching, and the reported line number
-is the line the match starts on.
+Insensitive to whitespace, line-leading markup, and case — each because a
+line-based search fails open, and a gate on an unrecoverable rule must fail shut.
+Prose and comments here are hard-wrapped, so a value can straddle a newline, and
+the continuation line usually carries a prefix (`# `, `> `, `- `). Collapsing
+whitespace alone is not enough: the prefix lands inside the joined text and the
+value stops matching. This project's one real leak lived in a hash-prefixed
+fixture comment, which is why that case has its own test.
 
     python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs
 
-Exit 0 clean, 1 if anything matched, 2 on a usage or empty-pattern-list error.
-The aid file is never scanned: it contains every original by definition.
+Exit codes:
+    0  every pattern checked against at least one file, nothing matched
+    1  something matched
+    2  the check proved nothing, and saying "clean" would be a lie — a missing aid,
+       an aid with no patterns, a target that does not exist, no files under the
+       targets, or only the aid in scope
+
+The aid is never scanned: it holds every original by definition. The output states
+how many files were scanned, because the pattern count alone cannot show that
+anything was read.
 """
 from __future__ import annotations
 
@@ -1431,8 +1541,15 @@ import re
 import sys
 from pathlib import Path
 
-SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".superpowers", ".venv"}
-TEXT_SUFFIXES = {".md", ".py", ".json", ".yml", ".yaml", ".txt", ".toml", ".cfg", ""}
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".superpowers", ".venv", "node_modules"}
+
+# An allow-list of text suffixes fails open: a value in a .csv or .html goes unseen
+# and the gate still says clean. Skip only what cannot hold readable text.
+BINARY_SUFFIXES = {
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".pdf", ".zip", ".gz", ".tar",
+    ".7z", ".xls", ".xlsx", ".xlsm", ".doc", ".docx", ".ppt", ".pptx", ".so", ".dll",
+    ".exe", ".pyc", ".whl", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4", ".jar",
+}
 
 
 def patterns_from_aid(aid: Path) -> list[str]:
@@ -1445,25 +1562,56 @@ def patterns_from_aid(aid: Path) -> list[str]:
         if len(cells) < 2:
             continue
         first = cells[0]
-        if not first or set(first) <= set("-: ") or first.lower() == "original":
+        # `startswith`, not `==`: the real aid's header cell reads "Original value",
+        # and an unskipped header becomes a live pattern — a false positive, and it
+        # inflates the pattern count that is meant to prove the gate is not vacuous.
+        if not first or set(first) <= set("-: ") or first.lower().startswith("original"):
             continue
         out.append(first)
     return out
 
 
-def normalise(text: str) -> str:
-    return re.sub(r"\s+", " ", text)
+def flatten(raw: str, strip_markup: bool) -> tuple[str, list[int]]:
+    """Collapse the text to single-spaced form, tracking the source line per character.
+
+    With strip_markup, a run of comment, quote or list markers at the start of a
+    line is dropped first, so a value wrapped across `# ` or `> ` prefixed lines
+    still reads as continuous text. Without it, such a prefix would sit inside the
+    joined string and the value would not match.
+    """
+    out: list[str] = []
+    line_of: list[int] = []
+    for line_no, line in enumerate(raw.split("\n"), 1):
+        body = re.sub(r"^[ \t]*[>#|*+\-]+[ \t]*", "", line) if strip_markup else line
+        for ch in body:
+            if ch in " \t":
+                if out and out[-1] != " ":
+                    out.append(" ")
+                    line_of.append(line_no)
+            else:
+                out.append(ch)
+                line_of.append(line_no)
+        if out and out[-1] != " ":       # a line break behaves as a space
+            out.append(" ")
+            line_of.append(line_no)
+    return "".join(out), line_of
 
 
-def iter_files(targets: list[Path], aid: Path):
+def iter_files(targets: list[Path]):
+    """Yield every candidate file, and report any target that does not exist."""
+    missing: list[Path] = []
+    found: list[Path] = []
     for t in targets:
         if t.is_file():
-            yield t
+            found.append(t)
         elif t.is_dir():
             for p in sorted(t.rglob("*")):
                 if p.is_file() and not (SKIP_DIRS & set(p.parts)) \
-                        and p.suffix.lower() in TEXT_SUFFIXES:
-                    yield p
+                        and p.suffix.lower() not in BINARY_SUFFIXES:
+                    found.append(p)
+        else:
+            missing.append(t)
+    return found, missing
 
 
 def main() -> int:
@@ -1482,31 +1630,46 @@ def main() -> int:
         print("no patterns in the aid: the check would pass trivially", file=sys.stderr)
         return 2
 
-    aid_resolved = aid.resolve()
-    hits = []
-    for f in iter_files([Path(t) for t in args.targets], aid):
-        if f.resolve() == aid_resolved:
-            continue
-        raw = f.read_text(encoding="utf-8", errors="replace")
-        flat = normalise(raw)
-        for pat in pats:
-            npat = normalise(pat)
-            if npat and npat in flat:
-                # locate the line the match starts on, tolerating the wrap
-                idx = flat.index(npat)
-                prefix_words = flat[:idx].count(" ")
-                line_no, seen = 1, 0
-                for i, line in enumerate(raw.splitlines(), 1):
-                    seen += len(normalise(line).split(" ")) if line.strip() else 0
-                    if seen > prefix_words:
-                        line_no = i
-                        break
-                hits.append((f, line_no, pat))
+    considered, missing = iter_files([Path(t) for t in args.targets])
+    if missing:
+        for m in missing:
+            print(f"no such target: {m}", file=sys.stderr)
+        return 2
+    if not considered:
+        print("no files under the given targets: the check proved nothing",
+              file=sys.stderr)
+        return 2
 
-    print(f"{len(pats)} patterns checked against the tree")
+    aid_resolved = aid.resolve()
+    scanned = 0
+    hits = []
+    for f in considered:
+        if f.resolve() == aid_resolved:
+            continue                      # holds every original by definition
+        scanned += 1
+        raw = f.read_text(encoding="utf-8", errors="replace")
+        views = (flatten(raw, False), flatten(raw, True))
+        for pat in pats:
+            npat = " ".join(pat.split()).casefold()
+            if not npat:
+                continue
+            for hay, line_of in views:
+                idx = hay.casefold().find(npat)
+                if idx != -1:
+                    hits.append((f, line_of[idx], pat))
+                    break                 # one report per pattern per file
+
+    if not scanned:
+        print("only the aid was in scope: the check proved nothing", file=sys.stderr)
+        return 2
+
+    print(f"{len(pats)} patterns checked against {scanned} files "
+          f"(the aid itself is never scanned)")
     if not hits:
         print("clean")
         return 0
+    print("first occurrence per pattern per file only — treat as a gate, "
+          "not a cleanup inventory")
     for f, line_no, pat in hits:
         print(f"  LEAK  {f}:{line_no}  matches {pat!r}")
     return 1
@@ -1517,7 +1680,11 @@ if __name__ == "__main__":
 ```
 
 Run the tests again: `python -m pytest tools/tests/test_leak_check.py -v`
-Expected: 7 passed. If `test_leak_wrapped_across_a_newline_is_found` fails, the normalisation is not being applied to both sides.
+Expected: 15 passed. Three tell you the most if they fail:
+
+- `test_leak_wrapped_across_a_newline_is_found` — the normalisation is not applied to both sides.
+- `test_leak_inside_hash_prefixed_comment_lines_is_found` — the markup-stripped second view is missing, and the case this project has actually been bitten by is unguarded.
+- `test_a_target_that_does_not_exist_is_an_error` or `test_scanning_zero_files_is_an_error` — the gate can still report `clean` having read nothing, which is the fail-open path that matters most.
 
 - [ ] **Step 6: Verify no client data will be staged**
 
@@ -1525,7 +1692,9 @@ Expected: 7 passed. If `test_leak_wrapped_across_a_newline_is_found` fails, the 
 python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills
 ```
 
-Expected: a non-zero pattern count followed by `clean`. **If it prints `LEAK`, do not stage anything.** Exit 2 means the aid has no rows and the check is vacuous — fix that before trusting it.
+Expected: a line reading `N patterns checked against M files`, both non-zero, followed by `clean`. **If it prints `LEAK`, do not stage anything.**
+
+Exit 2 means the check proved nothing and must be fixed before it is trusted: no aid, an aid with no rows, a target that does not exist, no files under the targets, or only the aid in scope. Read the stderr line — each of those says which. A gate that cannot distinguish "found nothing" from "read nothing" is the defect this tool exists to prevent, so it refuses to report `clean` in the second case.
 
 Then confirm the aid itself is not stageable:
 
@@ -1565,7 +1734,7 @@ Expected: `ok    hunt-the-findings` on this skill's line, **exit 1**, with `chec
 
 - [ ] **Step 9: Read the skill against the eval assertions**
 
-Confirm all 18 assertions are satisfiable. Eval 3's "Does not simply agree with the user's inference" is the one at risk — the skill must be direct enough that a model reading it contradicts a user who has drawn the wrong conclusion.
+Confirm all 24 assertions across the four evals are satisfiable. Two are at risk. Eval 3's "Does not simply agree with the user's inference" needs the skill direct enough that a model contradicts a user who has drawn the wrong conclusion. Eval 4's "States that neither channel discharges the other, and why the readers differ" needs both halves — the rule and the reason — because the reason is what lets a reader apply it to a case the skill does not name.
 
 - [ ] **Step 10: Commit**
 
