@@ -172,8 +172,8 @@ usable, because the reader cannot tell what was examined and found sound from wh
 never examined — and silence reads as absence of defect when it is absence of
 information. Catalogue §12 has the standing subjects.
 
-Give them their own section, and for each say what was probed and how, in the same
-operational terms as a finding. Good subjects: money handling and float error; the
+Give them their own section of `evidence/03-findings.md`, and for each say what was
+probed and how, in the same operational terms as a finding. Good subjects: money handling and float error; the
 ordering of the key control; whether the population that ships is the population that
 was checked; sign correctness on the real data; whether anything is dropped between
 parse and output; duplicate-key handling; behaviour under the installed dependency
@@ -220,7 +220,20 @@ because it has to be either chased or withdrawn.
   and deliverable hygiene (§10), which needs the actual bytes of an actual output file.
   What remains genuinely workable from the code alone is most of §1, §6's
   documentation contradictions, §7's unguarded reliance, and §9's test-suite shapes —
-  which is real value, so produce it rather than refusing.
+  which is real value, so produce it rather than refusing. Two more are **partly**
+  workable and must be reported as partly worked rather than as either: §4, where
+  reading the code shows whether a digest is ever recomputed and whether the outputs are
+  hashed at all, but the provocations that turn that into a demonstrated finding —
+  deleting the source a cache is keyed on, following every evidence pointer to see
+  whether it resolves — need a run; and §11, where the bind interface, the origin checks
+  and the containment guards are all legible in the code, while traversal and the
+  mutating entry points need execution to test. §12 is not a class to work but the rule
+  for recording what held up, and it still applies — with the caveat that most of its
+  standing subjects need measurement, so here the negative-results section is thinner
+  and has to say why rather than simply be short.
+
+  Account for all twelve. A partition that names nine and leaves three unmentioned is
+  the same defect this section exists to prevent, one level up.
 
   Then name the classes not attempted, rather than reporting a clean sweep. A catalogue
   silently worked at half coverage reads identically to one worked fully, and the
@@ -233,8 +246,9 @@ because it has to be either chased or withdrawn.
   book-writing phase, and the verification pass, which opens it without this
   conversation attached and reproduces each entry from scratch. An unmarked gap is read
   there as ground that was covered and found clean, and a verification pass cannot
-  reproduce an absence it was never told about. Offer to establish what is missing, in
-  both places, and say what it buys: the ordering classes become workable at all, and
-  the measured classes become reproducible instead of inferred.
+  reproduce an absence it was never told about. Then offer to establish what is missing
+  — the execution spine, the evidence base, or both — in both places, and say what it
+  buys: building the spine makes the ordering classes workable at all rather than
+  skipped, and a baseline makes the measured classes reproducible instead of inferred.
 - *Hands back:* the path to `evidence/03-findings.md`, and the list of catalogue
   sections worked, with the verdict for each.

@@ -42,6 +42,20 @@
         "Does not simply agree with the user's inference"
       ],
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Nobody mapped the ordering — there's no execution spine. Work the catalogue anyway.",
+      "expected_output": "Should work the classes it can and produce findings rather than refusing. Should name the classes it could not attempt, specifically and by catalogue section, rather than reporting a clean sweep — a catalogue silently worked at half coverage reads identically to one worked fully. Should disclose the gap both in its own answer and at the top of evidence/03-findings.md, and say that neither channel discharges the other, because the verification pass opens the file without the conversation attached and an unmarked gap reads there as ground covered and found clean. Should offer to build the spine first and say what it would add.",
+      "assertions": [
+        "Produces findings rather than refusing",
+        "Names the classes it could not attempt, by catalogue section",
+        "Does not report or imply a clean sweep across all twelve classes",
+        "Discloses the gap in its own answer and at the top of evidence/03-findings.md",
+        "States that neither channel discharges the other, and why the readers differ",
+        "Offers to build the execution spine first and says what it would add"
+      ],
+      "files": []
     }
   ]
 }
