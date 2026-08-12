@@ -48,6 +48,7 @@ The full subject — governance over AI-designed accounting workflows — is lar
 | D8 | Plugin named `tully`; skills named as imperative instructions to it | Fun confined to the package name, skill names and docs; skill *content* reads dead straight |
 | D9 | Working folder is `evidence/` | The word the doctrine already uses, and safe if a firm archives the folder into a client file |
 | D10 | Spec lives at `docs/specs/`, not `docs/superpowers/specs/` | Public repo; the default path would publish internal tooling naming into the docs tree |
+| D11 | Publication is gated on author review of the anonymised material; the repo stays local until then | A mechanical grep only catches values someone thought to search for. Confidentiality failures are not recoverable once pushed, so the gate is a hard stop rather than a checklist item (§13) |
 
 ## 4. Repository layout
 
@@ -272,6 +273,17 @@ Client-derived data changes: client and system names become a consistent fiction
 "In the reference engagement" becomes "in the engagement this catalogue was written from" — provenance signalled, identity removed.
 
 Verification of this pass is a required implementation step, not a best effort: a grep for client names, the specific substituted codes, and the original amounts across the whole repo must return nothing before publication.
+
+### Publication gate
+
+**The repository stays local until the anonymised reference material has been read and approved by the author.** Adding a remote and the first push are both behind this gate; no implementation step may perform either.
+
+Two requirements follow from that, and they belong in the plan:
+
+1. The anonymisation is performed as its own commit, touching nothing else, so the gate has a clean diff to review rather than a mixed changeset.
+2. Alongside it, a review aid listing every substitution — original value, replacement, and the file and line of each occurrence — written to `docs/` and **git-ignored**, since it would otherwise reconstruct exactly what the anonymisation removed. The aid is for the author's review and is deleted once the gate clears.
+
+The mechanical grep is necessary and not sufficient: it catches values someone remembered to search for, and the gate exists to catch the ones nobody thought of — a defect described in enough detail to identify the client without naming it, a magnitude paired with an industry, a file path in an example.
 
 ## 14. Verification plan
 
