@@ -40,8 +40,10 @@ root and names `./` as the plugin source, so the clone is itself a marketplace.
 /plugin install tully
 ```
 
-Then `/tully:review <path-to-tool> [--mode document|review|verify]`, or just describe the
-tool and what you need from it — the skills carry their own triggers.
+Then `/tully:review path/to/tool`, appending `--mode document`, `--mode review` or
+`--mode verify` only where you want to name the mode yourself rather than let it be
+inferred. Or just describe the tool and what you need from it — the skills carry their own
+triggers, and inference from the request is the primary path either way.
 
 ## The six skills
 
@@ -52,7 +54,7 @@ In phase order, the orchestrator first.
 | `review-the-tool` | The way in, and it reviews nothing itself. Infers the mode, classifies the artifact against the path registry, creates the evidence folder, then dispatches the five phases below and checks what each hands back. |
 | `establish-the-truth` | Phase 1. Executes the tool for real and measures its actual output, producing the evidence base every later figure is quoted from. |
 | `map-the-code` | Phase 2. Documents every module and function — signature, business purpose, mechanism with line citations, load-bearing assumptions, failure modes — plus the ordered execution spine of the entry point. |
-| `hunt-the-findings` | Phase 3. Works a catalogue of twelve defect classes that tools producing financial deliverables actually have, rather than reading the code again and hoping something surfaces. |
+| `hunt-the-findings` | Phase 3. Works a twelve-section catalogue of the defect classes that tools producing financial deliverables actually have, rather than reading the code again and hoping something surfaces. |
 | `write-the-books` | Phase 4. Writes the two deliverables — a human review checklist organised by audit assertion, and the function-level code review — with every figure attributed to a measured run. |
 | `check-the-facts` | Phase 5. Adversarially fact-checks a finished document: resolves every `file.ext:NNN` citation mechanically, re-derives every quantitative claim from the run folders, and reproduces every finding from scratch. |
 
@@ -89,7 +91,10 @@ These three do not, and are marked *not in this release*:
   restating it. Determinism decides this, not the file extension: a `.py` file whose
   central step calls a language model is an LLM-at-runtime artifact wearing a code
   extension.
-- **Processes with human steps.**
+- **Processes with human steps.** The registry carries this row and nothing else. Neither
+  the orchestrator nor this README says what a path for it would need, so nothing here
+  should be read as a design for one. What the row records is that the type is recognised
+  and unserved, and until someone writes the path, the refusal below is what governs it.
 
 An AI-written memo or technical position has no row at all. The nearest thing available is
 `verify` against the document itself, and only where it already carries `file.ext:NNN`
