@@ -78,8 +78,34 @@ Three, and the first two must be green before a pull request:
 ```
 python tools/validate_skills.py
 python -m pytest -q
-python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs tools agents
+python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs examples agents commands tools README.md CONTRIBUTING.md LICENSE .claude-plugin .github
 ```
+
+**That target list is long on purpose, and shortening it is how this check goes quiet.**
+It names every tracked path except `.gitignore`, which holds path patterns rather than
+prose. The list used to stop at `skills docs tools agents`, which scanned 27 of the 38
+files in the tree and left out — among others — all four files under `examples/`, and
+those are the artifacts written *from* the engagement the review aid describes. They are
+the likeliest place in the repository for a value to survive, and they were the one place
+the gate did not look. A check measured on the wrong population is §2 of this plugin's own
+catalogue; it can be green for the same reason a control that excludes the rows it would
+fail on is green.
+
+So read the gate's first line, not just its exit code. It reports both counts:
+
+```
+12 patterns checked against 38 files (the aid itself is never scanned)
+clean
+```
+
+**38 is the number to notice.** It rises as files are added, so a run reporting fewer means
+the scan shrank. A target spelled wrong is caught for you — the tool exits 2 with
+`no such target` rather than skipping it — but a target *dropped from the list*, which is
+how the previous version came to scan 27, is not an error at all: the run reports a smaller
+number and still prints `clean`. That is the only place a narrowed gate is visible, so
+compare the count against the one above rather than reading the exit code alone. The
+pattern count is the same idea from the other side — it cannot show that anything was
+*read*, which is why the file count is printed beside it.
 
 The validator checks what CI can check mechanically: frontmatter present and matching the
 directory, a description within the length limit, no dangling reference paths, and an evals

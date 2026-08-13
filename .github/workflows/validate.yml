@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The last step searches history for the review aid. checkout defaults to
+          # depth 1, which would make `git log --all` read one commit and pass on
+          # anything — a check that cannot fail.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -19,10 +24,23 @@ jobs:
         run: python tools/validate_skills.py
       - name: Run tests
         run: python -m pytest -q
-      - name: Assert the anonymisation review aid was not committed
+      - name: Assert the anonymisation review aid is not tracked and never entered history
         run: |
+          # Two checks, because the first one establishes less than its name suggests.
+          # `ls-files` speaks only about HEAD, and a leak that was committed and then
+          # removed is untracked at HEAD while sitting in every reachable commit in
+          # between — which is not hypothetical in this repository.
+          if git rev-parse --is-shallow-repository | grep -q true; then
+            echo "::error::the clone is shallow, so the history search below would prove nothing"
+            exit 1
+          fi
           if git ls-files --error-unmatch docs/anonymisation-review-aid.md 2>/dev/null; then
             echo "::error::the anonymisation review aid is tracked; it must stay ignored"
             exit 1
           fi
-          echo "review aid is not tracked"
+          added=$(git log --all --diff-filter=A --format=%H -- docs/anonymisation-review-aid.md)
+          if [ -n "$added" ]; then
+            echo "::error::the review aid was added to history in commit(s): $added"
+            exit 1
+          fi
+          echo "review aid is untracked at HEAD and was added in no reachable commit"
