@@ -115,12 +115,19 @@ refactored to accommodate it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## A worked example
 
-`examples/worked-engagement/` — **not in the tree yet.** It is the last piece of this
-release, and it will hold a synthetic example rather than a redacted real engagement: a
-filled evidence base with two reference runs and their measured figures, an excerpt of the
-human review checklist, and an excerpt of the code review, so the shape of each artifact
-can be read before anything is run. Every figure in it will be invented, and its own README
-will say so.
+[`examples/worked-engagement/`](examples/worked-engagement/) holds a synthetic example
+rather than a redacted real engagement: a filled evidence base with two reference runs and
+their measured figures, an excerpt of the human review checklist, and an excerpt of the code
+review, so the shape of each artifact can be read before anything is run. Every figure in it
+is invented, and its own README says so in its first paragraph — the documents are written in
+the register of a workpaper, and a reader who took them for a sanitised real engagement would
+draw conclusions from numbers that were chosen to make an example work.
+
+The two runs differ, and the figures differ with them, because one run is an anecdote: the
+narrow run withholds an input the wide one supplies, and five of the example's conclusions
+exist only in the difference. Every figure in both excerpts names the run it came from and
+resolves to that run's own `FIGURES` table — an example that quoted a figure from a run it
+never defined would demonstrate the exact error phase 5 exists to catch.
 
 ## Contributing
 
