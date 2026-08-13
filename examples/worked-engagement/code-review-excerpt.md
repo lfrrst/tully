@@ -181,10 +181,9 @@ so the tool appears to work without the argument. That repair is coincidental. I
 restores the string only while each part's significant digits fit its declared width,
 which is accidental correctness of the kind that survives every test and breaks the
 first time a width in `SEGMENT_WIDTHS` changes. `rows` already carrying `LL_ACCOUNT`,
-written by stage 3
-(`converter/convert.py:142`). And that it runs before stage 8
-(`converter/convert.py:161` before `:188`), because the balancing line's segment is a
-constant and is not produced here.
+written by stage 3 (`converter/convert.py:142`). And that it runs before stage 8
+(`converter/convert.py:161` before `converter/convert.py:188`), because the balancing
+line's segment is a constant and is not produced here.
 
 **Failure modes.** A missing tab raises `ValueError` from the reader
 (`converter/segments.py:63`) and the run stops with nothing written. A sheet with fewer
@@ -300,8 +299,9 @@ completeness, so the documentation's claim and the code's capability are in dire
 conflict — demonstrated, not asserted: the plug at `converter/journal.py:418` runs at
 stage 8 (`converter/convert.py:188`) and the test at `converter/controls.py:74` runs at
 stage 9 (`converter/convert.py:203`). C04's mechanism is different: its population
-filter is the field it tests (`converter/controls.py:129`, verdict at `:137`), so the
-rows that would make it fail are the rows it excludes, and it gets greener as the input
+filter is the field it tests (`converter/controls.py:129`, verdict at
+`converter/controls.py:137`), so the rows that would make it fail are the rows it
+excludes, and it gets greener as the input
 gets worse — 0 exceptions over 812 rows in RUN A-FULL-Q1 and 0 over 0 in
 RUN B-FUND-100, where the extract was withheld entirely.
 

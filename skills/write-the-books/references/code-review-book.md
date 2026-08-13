@@ -8,6 +8,12 @@ The reference a maintainer consults when they need to know where a number came f
 # Code Review
 ## <Tool name and version> — complete reference
 
+   Working-paper statement       first page, before anything else substantive: this is an
+                                 internal working paper supporting a preparer and a
+                                 reviewer; not an attest report, and nothing in it is an
+                                 audit, review or agreed-upon-procedures engagement under
+                                 professional standards
+
 1. Purpose and method            what was read, what was executed, what "verified" means here
 2. The <domain> in one page      what the tool is for, in the reader's language, before any code
 3. Architecture                  the module table; the two or three design decisions that shape everything

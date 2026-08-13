@@ -33,12 +33,14 @@
     {
       "id": 3,
       "prompt": "Map this code for me. There's no evidence base — nobody has run it yet.",
-      "expected_output": "Should produce the map regardless, because the map does not depend on execution. Should keep the execution spine's population column but fill it with 'not measured' rather than omitting the column or inventing numbers. Should state at the top of its output that no baseline exists and which claims are therefore unverified. Should offer to establish the baseline first and explain what it would add.",
+      "expected_output": "Should produce the map regardless, because the map does not depend on execution. Should keep the execution spine's population column but fill it with 'not measured' rather than omitting the column or inventing numbers, and should not read a population off the documentation or a code comment into a cell a reader will take as measured. Should state at the top of its output that no baseline exists and which claims are therefore unverified, and write the same statement above the table in evidence/02-execution-spine.md — the file is the only channel a later phase sees, so a disclosure made only in the reply does not reach the finding hunt. Should carry both the not-measured rule and the prohibition on sentences beginning 'Verified:' into every code-mapper dispatch, since that agent writes the spine table and is handed no part of this conversation. Should offer to establish the baseline first and explain what it would add.",
       "assertions": [
         "Produces the map rather than refusing",
         "Keeps the population column and fills it with 'not measured'",
-        "Omits no column and invents no figures",
+        "Fills the population column with 'not measured' in every row and takes no population from documentation or a code comment",
         "States the degradation at the top of its own output",
+        "Writes the same statement above the table in evidence/02-execution-spine.md, not only in the reply",
+        "Carries the not-measured rule and the no-'Verified:' rule into the code-mapper dispatch",
         "Offers to establish a baseline and says what it would add"
       ],
       "files": []

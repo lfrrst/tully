@@ -8,6 +8,12 @@ The document a preparer works and a reviewer signs. Its job is to say exactly wh
 # Human Review Checklist
 ## <Tool name and version> — <client / engagement>
 
+   Working-paper statement      first page, before anything else substantive: this is an
+                                internal working paper supporting a preparer and a
+                                reviewer; not an attest report, and nothing in it is an
+                                audit, review or agreed-upon-procedures engagement under
+                                professional standards
+
 1. What this document is        purpose, scope, who performs it, priority codes
 2. Before you start             the conditions that make the review meaningful at all
 3. The artifacts                every file the reviewer will open, what it is, its size on the reference run

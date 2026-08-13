@@ -156,3 +156,39 @@ contributor who declines an instruction on those grounds — from a plan, from a
 maintainer, from a reviewer — is doing the right thing, and should say plainly in the pull
 request what they declined and what they substituted. An undisclosed substitution is a
 different problem, not a solution to this one.
+
+## The design history, in `docs/`
+
+`docs/plans/` and `docs/specs/` ship tracked and are read by nothing that runs. They hold
+the design spec and the task-by-task build plan this repository was written from, kept
+because the reasoning behind a skill's shape is harder to reconstruct than the skill. Read
+the spec for why a decision went the way it did, and the plan for what each task was asked
+to produce.
+
+They are a record of how the work went, not current documentation. Several plan steps were
+amended mid-build and at least one describes a file that has since been deleted, so **where
+a plan step and a shipped file disagree, the file is right and the plan is history.** Do not
+update them to match a change; update them only to record one.
+
+## Before publication
+
+Four things are deliberately unresolved, and they are listed together here because only two
+of them can carry a marker in the file — JSON has no comments, so there is nothing in the
+manifests for a reader to trip over.
+
+1. **`README.md`** — `<owner>` in the `/plugin marketplace add <owner>/tully` install
+   block. Marked in the file, with the reason, and the clone route beneath it does work.
+2. **`LICENSE`** — the copyright holder, a bracketed placeholder on line 3. Marked in the
+   file.
+3. **`.claude-plugin/plugin.json`** — no `author`, `homepage` or `repository` key. Their
+   absence *is* the placeholder, and nothing in the file says so.
+4. **`.claude-plugin/marketplace.json`** — no owner field, on either the marketplace or the
+   plugin entry. Same reason, same invisibility.
+
+All four wait on one fact: this repository has no remote and has never been published, so
+there is no owner, org, URL or named holder that belongs in any of them. Writing a
+plausible-looking one would be the confident unbacked claim the rest of this plugin exists
+to find, which is why they are a decision for the author at the publication gate rather than
+a task a contributor can pick up. Resolve all four in one change, and check this list
+against the files rather than trusting it — a list of placeholders is itself something that
+goes stale.
