@@ -126,9 +126,11 @@ def test_document_with_no_citations_exits_two(tmp_path):
     # every citation resolved on a run that resolved none.
     src = tmp_path / "src"
     write(src / "pipeline.py", "a\nb\n")
+    # Invented figures, unrelated to anything in the tree: a fixture is the one place
+    # this project has already leaked a real value from, so nothing is borrowed here.
     doc = write(tmp_path / "book.md",
-                "Procedure 4: expect 1,204 rows against the reference run.\n"
-                "Ignore note:12 and the segment key C01:Aurora.Segment.\n")
+                "Procedure 4: expect 77 rows against the reference run.\n"
+                "Ignore note:12 and the segment key C01:Example.Segment.\n")
     r = run(doc, src)
     assert r.returncode == 2, r.stdout
     assert "no citations found: the check proved nothing" in r.stderr
