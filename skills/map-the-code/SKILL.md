@@ -142,15 +142,25 @@ Two things get harder without fan-out, and both are worth deliberate effort:
   specifically for ordering defects. A targeted re-read for one class, not a general
   one — re-reading your own work in general finds nothing.
 
-Then disclose it. Say in your own answer, now, that the layers were worked
-sequentially rather than in parallel, so the sections are less uniform than a
-fanned-out review's and depth varies most in the layer worked last. Say it again in
-§1 of the finished code review, when a code review gets written. The disclosure in
-the answer is not discharged by the promise of the one in §1 — this phase can be
-the only thing that ever runs, and a disclosure deferred to a document nobody
-writes is a disclosure nobody makes. Working sequentially is not a defect in the
-review. It changes what a reader should expect of its uniformity, and they have to
-know that before they rely on it, which means before they leave this conversation.
+Then disclose it, in two places you write yourself and one you ask for. Say in your
+own answer, now, that the layers were worked sequentially rather than in parallel, so
+the sections are less uniform than a fanned-out review's and depth varies most in the
+layer worked last. **Write the same statement as the first line of
+`evidence/02-execution-spine.md`** — above the table, alongside the no-population
+banner where that applies — because the answer is the only channel the user sees and
+that file is the only channel the later phases see, and a disclosure that exists in
+neither file has to be remembered by somebody. Then say it again in §1 of the finished
+code review, when a code review gets written.
+
+None of the three discharges the others. The one in the answer is not discharged by
+the promise of the one in §1 — this phase can be the only thing that ever runs, and a
+disclosure deferred to a document nobody writes is a disclosure nobody makes. The one
+in §1 is not discharged by the one in the answer either, which is why it goes in the
+spine file: `write-the-books` reads the spine without this conversation attached, and
+it is told to carry a statement standing above that table into the book. Working
+sequentially is not a defect in the review. It changes what a reader should expect of
+its uniformity, and they have to know that before they rely on it, which means before
+they leave this conversation.
 
 ## Standalone
 
@@ -174,5 +184,15 @@ know that before they rely on it, which means before they leave this conversatio
   `not measured` cells with nothing to explain them. Offer to establish the baseline
   first, in both places, and say what it buys: a measured population at every stage,
   and findings the hunt can reproduce rather than infer.
+
+  **Carry both rules into every `code-mapper` dispatch, in the dispatch text.** The
+  agent is what actually writes the spine table and the layer entries, and it is
+  handed no part of this conversation: tell it that every population cell reads
+  `not measured` and that no sentence it writes may begin "Verified:", because
+  nothing was executed. Its own system prompt says the same, and it is stated in both
+  places for the reason the depth target is — the agent carries the rule through a
+  10,000-word task, and the caller is the party who can enforce it on what comes back.
+  A rule that stops at the dispatch boundary is enforced on the one party that writes
+  no output.
 - *Hands back:* the paths written — `evidence/02-execution-spine.md` and one
   `evidence/02-map-<layer>.md` per layer.

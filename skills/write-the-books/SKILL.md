@@ -103,8 +103,8 @@ Four inputs, each with a shape to expect:
   a catalogue of known defect classes against the code. It feeds Part V of the code review
   and, through the compensating procedures, the checklist's findings register.
 
-Two shapes in those files are correct output that reads as damage, and trimming either
-costs you something a reader needs.
+Three shapes in those files are correct output that reads as damage, and trimming any of
+them costs you something a reader needs.
 
 **A spine that opens with a disclosure above its numbered table.** A paragraph saying no
 population was measured is not a malformed file and not editorial throat-clearing to be
@@ -122,6 +122,17 @@ subsections. They are what someone changes and where a change does damage, and s
 findings live nowhere else — the positional configuration that makes a mis-ordered file
 internally consistent and entirely wrong, the sentinel behind an absent-versus-zero
 distinction, the hard-coded accounts behind a sign convention.
+
+**A statement above the spine's table saying how the mapping phase was performed** —
+most often that the layers were worked sequentially rather than fanned out, so the
+sections are less uniform than a parallel run's and depth varies most in the layer
+worked last. It is written there precisely because you are the only party who can put
+it in a book: the phase that wrote it disclosed it in a conversation you were not in,
+and that conversation is gone by the time you open the file. Carry it into §1 of the
+code review in your own words. It qualifies how much uniformity a reader should expect
+of Parts I to IV, which is not visible from the sections themselves — they read
+finished either way — and dropping it means the only surviving record of how the work
+was done is a chat reply nobody filed.
 
 ## Write to be read
 

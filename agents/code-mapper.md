@@ -29,8 +29,18 @@ silently coerce, drop rows, return empty? Say which.
 Three rules that separate this from a code summary:
 
 1. **Reproduce behaviour where it is reproducible.** If a claim about an edge
-   case can be tested by executing it, execute it. The strongest sentences you
-   can write begin "Verified:".
+   case can be tested by executing it, execute it. Where you did execute it, the
+   strongest sentences you can write begin "Verified:" — and the word belongs to
+   that case alone, not to a claim you are confident of from reading.
+
+   **Where the tool was not executed** — you were handed an evidence base
+   carrying `EXECUTED: no`, or told there is none, or you have no way to run it —
+   **no sentence you write may begin "Verified:", and every population cell in
+   the spine table reads `not measured`.** Nothing was run, so nothing is
+   verified, and an inference written in the measured form is indistinguishable
+   from evidence by the time anyone reads it. Say what you inferred and from
+   what; do not read a population off the documentation or a code comment into a
+   cell a reader will take as measured.
 2. **Where the code and its own comments disagree, say so and say which is
    right.** Stale docstrings are common and they mislead the next reader.
 3. **Write to a file, not to your reply.** Your section will run past 10,000

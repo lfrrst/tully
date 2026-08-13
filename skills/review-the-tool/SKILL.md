@@ -87,7 +87,7 @@ and decline.
 | Mode | Phases | Produces | The rule that governs it |
 |---|---|---|---|
 | `document` | `establish-the-truth`, `map-the-code`, then `write-the-books` for the code review alone | the function-level code review | Still executes the tool wherever it can, because a documentation claim about an edge case is worth more when it can say verified. Tolerates `EXECUTED: no` far more gracefully than `review` does. The finished document states on page one that it is documentation and not assurance |
-| `review` (default) | all five: `establish-the-truth`, `map-the-code`, `hunt-the-findings`, `write-the-books`, `check-the-facts` | both books, over an evidence trail every figure in them is quoted from, and — only where a project or knowledge base is attached to the session — the short project record `write-the-books` saves beside them as the tail of its own run, giving what was produced, the reference runs and their key figures, the findings that matter most, and anything it corrects | The full engagement |
+| `review` (default) | all five: `establish-the-truth`, `map-the-code`, `hunt-the-findings`, `write-the-books`, `check-the-facts` | both books, over an evidence trail every figure in them is quoted from, and — only where a project or knowledge base is attached to the session — the short project record `write-the-books` saves beside them as the tail of its own run, giving what was produced, the reference runs and their key figures, the three findings that matter most, and anything it corrects | The full engagement |
 | `verify` | `check-the-facts` alone | an error list per document | Works against any document carrying `file.ext:NNN` citations — one a previous reviewer wrote, one another AI wrote, or the previous version of your own book |
 
 Say what `document` mode leaves out, in these terms: no checklist, no finding hunt, no
@@ -121,7 +121,7 @@ restating it.
 
 | Artifact type | Evidence | Mapping | Catalogue |
 |---|---|---|---|
-| Deterministic code | `establish-the-truth` | `map-the-code` | the twelve defect classes in `finding-patterns.md`, worked by `hunt-the-findings` |
+| Deterministic code | `establish-the-truth` | `map-the-code` | the twelve-section catalogue in `finding-patterns.md`, worked by `hunt-the-findings` |
 | Spreadsheet or model | *not in this release* | | |
 | LLM at runtime | *not in this release* | | |
 | Process with human steps | *not in this release* | | |
@@ -246,7 +246,7 @@ named for the client, the tool and the tool's version. Hands back both book path
 path to the one book where only one was asked for. Where a project or knowledge base is
 attached to the session, that skill also saves **the project record** as the tail of its
 own run: a short note beside the books giving what was produced, the reference runs and
-their key figures, the findings that matter most, and anything that corrects an earlier
+their key figures, the three findings that matter most, and anything that corrects an earlier
 document in the project. The condition is real and belongs in what you tell the caller — a
 run with nothing attached produces no record, and promising one anyway promises a file that
 will not exist.

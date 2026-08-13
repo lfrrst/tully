@@ -37,7 +37,13 @@ for having one.
    settings that exercise genuinely different paths — a different mode, a
    different period, a different population. Two runs give you a comparison; one
    gives you an anecdote. Give every run an identifier before you start it and
-   write its output to its own folder under that identifier. These runs are the
+   write its output to `evidence/runs/<run-id>/` — that exact shape, one folder
+   per run, named by the identifier. The path is part of the contract rather than
+   a suggestion: the verification pass re-derives every quantitative claim from
+   these folders and looks for them there, so a run written anywhere else is a
+   run the last phase cannot find, and a figure it cannot find is a figure it
+   reports as unverifiable. That applies to a standalone run of this phase too —
+   the folders outlive the conversation that made them. These runs are the
    evidence base for every number in both books the full review produces — the
    human review checklist a person works through with the output open beside
    them, and the function-level code review — and both should say so on their
@@ -144,6 +150,11 @@ baseline first. An hour of setup buys back all four of those.
 ## Standalone
 
 - *Needs:* the tool and its real inputs.
+- *Writes:* `evidence/01-evidence-base.md`, and one folder per run at
+  `evidence/runs/<run-id>/` holding that run's output. Use those paths even when
+  this phase runs on its own and no later phase is planned — the verification pass
+  looks for the run folders at exactly that shape, and a standalone run whose
+  output went somewhere else is invisible to it later.
 - *If that is missing:* if the tool cannot be executed, write the manifest with
   `EXECUTED: no` and the reason rather than producing nothing — an absent
   manifest tells the next phase nothing at all, while `EXECUTED: no` tells it
