@@ -123,6 +123,49 @@ def test_file_count_is_reported(tmp_path):
     assert "2 files" in r.stdout
 
 
+def test_only_the_value_table_contributes_patterns(tmp_path):
+    # The aid is hand-edited and grows tables that are not value tables. Every
+    # markdown row's first cell used to become a pattern, so a second table injected
+    # its own first column: a row reading "the" matches every file in the tree, the
+    # gate goes red having found nothing, and the pattern count — the number
+    # designated as proof the gate is not vacuous — is inflated past the real one.
+    aid = tmp_path / "aid.md"
+    aid.write_text(
+        "# aid\n"
+        "\n"
+        "| Original value | replacement | file | line |\n"
+        "|---|---|---|---|\n"
+        "| SECRETVALUE | PUBLICVALUE | f.md | 1 |\n"
+        "\n"
+        "## What was carried over rather than substituted\n"
+        "\n"
+        "| Word | Why it is here |\n"
+        "|---|---|\n"
+        "| the | a determiner, in every file in the tree |\n"
+        "| a | so is this one |\n"
+        "| mechanics | carried over deliberately |\n",
+        encoding="utf-8")
+    (tmp_path / "doc.md").write_text(
+        "the quick brown fox, a sentence about mechanics\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    # One real value, not four. The count is the proof the gate is not vacuous.
+    assert "1 patterns checked against 1 files" in r.stdout
+    assert "clean" in r.stdout
+    assert "LEAK" not in r.stdout
+
+
+def test_aid_with_no_value_table_is_an_error(tmp_path):
+    # No table headed "Original" means no values were listed, so nothing was checked.
+    aid = tmp_path / "aid.md"
+    aid.write_text("# aid\n\n| Word | Note |\n|---|---|\n| the | not a value |\n",
+                   encoding="utf-8")
+    (tmp_path / "doc.md").write_text("the\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 2
+    assert "no patterns" in r.stderr
+
+
 def test_aid_header_row_is_not_treated_as_a_pattern(tmp_path):
     aid = tmp_path / "aid.md"
     aid.write_text("| Original value | replacement | file | line |\n|---|---|---|---|\n"

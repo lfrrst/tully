@@ -11,7 +11,11 @@ prompts and is a human or LLM-judge activity.
     python tools/validate_skills.py
     python tools/validate_skills.py --skills-dir some/other/dir
 
-Exit code is 1 if any skill fails, so it can gate a build.
+Exit codes:
+    0  every skill checked, none failed
+    1  at least one failed, so it can gate a build
+    2  the check proved nothing — the skills directory does not exist, or it exists
+       and holds no skill. "0 problems" over nothing is not a pass.
 """
 from __future__ import annotations
 
@@ -107,6 +111,13 @@ def main() -> int:
         return 2
 
     dirs = sorted(p for p in root.iterdir() if p.is_dir())
+    if not dirs:
+        # An existing-but-empty skills directory reported "0 skills checked, 0
+        # problems" and exited 0. CI runs this with the default directory, so that
+        # is a green build over nothing checked.
+        print("no skills found: the check proved nothing", file=sys.stderr)
+        return 2
+
     all_problems: list[str] = []
     for d in dirs:
         problems = check_skill(d)

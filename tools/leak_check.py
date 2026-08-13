@@ -15,8 +15,8 @@ Exit codes:
     0  every pattern checked against at least one file, nothing matched
     1  something matched
     2  the check proved nothing, and saying "clean" would be a lie — a missing aid,
-       an aid with no patterns, a target that does not exist, no files under the
-       targets, or only the aid in scope
+       an aid with no value table or no patterns in it, a target that does not exist,
+       no files under the targets, or only the aid in scope
 
 The aid is never scanned: it holds every original by definition. The output states
 how many files were scanned, because the pattern count alone cannot show that
@@ -41,20 +41,40 @@ BINARY_SUFFIXES = {
 
 
 def patterns_from_aid(aid: Path) -> list[str]:
-    """First column of every data row of the aid's markdown table."""
+    """First column of every data row of the aid's value table, and of no other table.
+
+    Scoped to the table whose header row's first cell begins "Original" — the real
+    aid's reads "Original value" — because the aid is hand-edited and grows other
+    tables: a summary, a substitution count, a table of what was carried over. Every
+    markdown row's first cell used to become a pattern, so any second table injected
+    its own first column into the gate. A row whose first cell reads `the` matches
+    every file in the tree: the gate goes red having found nothing, and the pattern
+    count — the one number designated as proof that the gate is not vacuous — is
+    inflated past the number of real values, which is the signal destroyed.
+
+    `startswith`, not `==`, on the header. A table ends at the first blank line after
+    it, or at the first line that is not a table row; rows outside a value table are
+    ignored. If the aid holds no such table, no patterns are returned and the caller
+    exits 2 rather than reporting clean.
+    """
     out: list[str] = []
+    in_value_table = False
     for line in aid.read_text(encoding="utf-8", errors="replace").splitlines():
         if not line.startswith("|"):
+            in_value_table = False        # a blank line or prose ends the table
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 2:
+            in_value_table = False
             continue
         first = cells[0]
-        # `startswith`, not `==`: the real aid's header cell reads "Original value",
-        # and an unskipped header becomes a live pattern — a false positive, and it
-        # inflates the pattern count that is meant to prove the gate is not vacuous.
-        if not first or set(first) <= set("-: ") or first.lower().startswith("original"):
+        if first.lower().startswith("original"):
+            in_value_table = True         # the value table's header row
             continue
+        if not in_value_table:
+            continue                      # a row belonging to some other table
+        if not first or set(first) <= set("-: "):
+            continue                      # the separator row, or an empty first cell
         out.append(first)
     return out
 

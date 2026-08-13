@@ -137,6 +137,17 @@ def test_nonexistent_skills_dir_exits_two(tmp_path):
     assert "no such skills directory" in r.stderr
 
 
+def test_existing_but_empty_skills_dir_exits_two(tmp_path):
+    # This one exists and holds nothing. It printed "0 skills checked, 0 problems"
+    # and exited 0 — and CI invokes the validator with the default directory, so a
+    # skills/ holding only a .gitkeep produced a green build over nothing checked.
+    empty = tmp_path / "skills"
+    empty.mkdir()
+    r = run(empty)
+    assert r.returncode == 2
+    assert "no skills found: the check proved nothing" in r.stderr
+
+
 def test_reports_every_failure_not_just_the_first(tmp_path):
     make_skill(tmp_path, "first-bad", description=None)
     make_skill(tmp_path, "second-bad", frontmatter_name="wrong")
