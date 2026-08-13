@@ -11,10 +11,21 @@ supports the claim, rather than on whether the line exists.
     python citation_check.py BOOK.md --root SRC --only-findings    # citations near a finding word
     python citation_check.py BOOK.md --root SRC --json out.json
 
-Exit code is 1 if any citation fails to resolve, so it can gate a build.
+Exit codes:
+    0  every citation resolved
+    1  at least one did not, so it can gate a build
+    2  the check proved nothing, and saying every citation resolved would be a lie —
+       a missing document, a missing source root, or a document holding no citation
+       this tool recognises at all
 
-What it catches: dead files, out-of-range lines, and (with --sample) citations that
-resolve to a blank line or a line that is obviously not what the sentence describes.
+What it catches, each reported as its own status: a cited file that is not in the tree
+(FILE NOT FOUND), a basename matching two files so the citation names neither
+(AMBIGUOUS PATH), a file that cannot be opened (UNREADABLE), a line number past the
+end of the file it cites (LINE OUT OF RANGE), and a single-line citation resolving to
+a blank line (BLANK TARGET), which is usually an off-by-one against the block below
+it. All five fail the run. Blank targets are detected on every run — --sample prints
+resolved citations for a human to read, it is not what finds them.
+
 What it cannot catch: a citation that resolves to a real line that says something
 else. That still needs a reader — which is the point of --sample.
 """
@@ -68,7 +79,7 @@ def find_source(root: Path, cited: str, cache: dict) -> Path | None:
     return hit
 
 
-def line_of(doc_lines: list[str], pos: int, offsets: list[int]) -> int:
+def line_of(pos: int, offsets: list[int]) -> int:
     lo, hi = 0, len(offsets) - 1
     while lo < hi:
         mid = (lo + hi + 1) // 2
@@ -114,7 +125,7 @@ def main() -> int:
     for m in CITE.finditer(text):
         cited, start, end = m.group(1), int(m.group(2)), m.group(3)
         end = int(end) if end else start
-        docline = line_of(doc_lines, m.start(), offsets)
+        docline = line_of(m.start(), offsets)
         context = doc_lines[docline - 1]
         rec = {
             "citation": m.group(0),
@@ -142,11 +153,20 @@ def main() -> int:
                 rec.update(status="LINE OUT OF RANGE", file_lines=n)
             else:
                 body = src_lines[start - 1].strip()
-                rec.update(status="ok", source_text=body,
-                           # only meaningful for a single-line citation; a range
-                           # legitimately starts on the blank line above a block
-                           blank_target=(not body) and start == end)
+                # Only meaningful for a single-line citation; a range legitimately
+                # starts on the blank line above a block. A single-line citation to
+                # a blank line points the reader at nothing, so it is a status that
+                # fails the run rather than a note printed beside a pass — a
+                # document whose every citation landed one line past its target
+                # would otherwise exit 0.
+                blank = (not body) and start == end
+                rec.update(status="BLANK TARGET" if blank else "ok",
+                           source_text=body, blank_target=blank)
         results.append(rec)
+
+    if not results:
+        print("no citations found: the check proved nothing", file=sys.stderr)
+        return 2
 
     bad = [r for r in results if r["status"] != "ok"]
     blank = [r for r in results if r.get("blank_target")]

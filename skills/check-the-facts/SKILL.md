@@ -55,6 +55,11 @@ python scripts/citation_check.py BOOK.md --root /path/to/source
 python scripts/citation_check.py BOOK.md --root /path/to/source --sample 40 --only-findings
 ```
 
+`scripts/citation_check.py` is relative to this skill's own directory, not to the
+repository root or to the tree being reviewed — so run it from the skill directory, or
+give the script an absolute path. `--root` is the tree the citations point at, which is
+a different directory from either.
+
 It resolves every `file.ext:NNN` citation in the document against the source tree
 mechanically, so the agent spends its attention on whether the cited line *supports the
 claim* rather than on whether it exists. Run it yourself and hand the agent the output.
@@ -63,18 +68,31 @@ and then have less budget left for the half no script can do.
 
 What it establishes is mechanical, and worth knowing precisely: a cited file that is not
 in the tree, a line number past the end of the file it cites, a basename that matches
-two files so the citation names neither, a file it cannot open at all, and — in the
-sample — a citation resolving to a blank line, which is almost always an off-by-one
-against the block below it. Each of those is settled and should not be re-argued by a
-reader.
+two files so the citation names neither, a file it cannot open at all, and a single-line
+citation resolving to a blank line, which is usually an off-by-one against the block
+below it. All five are checked on every run — the sample is for reading citations that
+did resolve, not for finding the ones that did not — and all five fail the run. Each is
+settled and should not be re-argued by a reader.
 
-The exit codes are a contract: **0** when every citation resolves, **1** when any does
-not, **2** on a missing document or a missing source root. Treat 2 as a broken
-invocation rather than a failing document — nothing was checked, and a run that proved
-nothing must not be reported as a pass. The 1 gates a build, which is why it is worth
-running before anything is handed on rather than after. `tests/test_citation_check.py`
-holds the cases for that contract, so a change to the script that quietly breaks the
-exit codes fails the suite instead of silently downgrading this phase.
+The exit codes are a contract, and it has four values to know:
+
+- **0** — every citation resolved.
+- **1** — at least one did not: a dead file, an out-of-range line, an ambiguous
+  basename, an unreadable file, or a blank target.
+- **2** — the check proved nothing: a missing document, a missing source root, or a
+  document holding no citation the tool recognises at all.
+- and the rule over all three: **a run that proved nothing must not be reported as a
+  pass.** Treat 2 as a broken invocation or an inapplicable document rather than a
+  clean one. It is the exit you get on a checklist book, which carries reference
+  figures rather than `file.ext:NNN` citations, and on any document in `verify` mode
+  that turns out to be uncited. Nothing was resolved, so nothing was established, and
+  "0 problems" on a run that examined nothing is the same sentence as "every citation
+  resolved" — which is false.
+
+The 1 gates a build, which is why it is worth running before anything is handed on
+rather than after. `tests/test_citation_check.py` holds the cases for all three exit
+codes, so a change to the script that quietly breaks them fails the suite instead of
+silently downgrading this phase.
 
 Exit 0 is the weaker of the two things you need, and the trap in this phase is reading
 it as verification. **What the script cannot catch is a citation that resolves to a
