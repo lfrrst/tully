@@ -22,18 +22,12 @@ this plugin — **a figure you did not produce by executing something is not evi
 ## Install
 
 ```
-/plugin marketplace add <owner>/tully
+/plugin marketplace add lfrrst/tully
 /plugin install tully
 ```
 
-**`<owner>` is unresolved, and deliberately so.** This repository has no remote and has
-never been published, so there is no owner, org or URL that belongs in that command yet.
-Writing a plausible-looking one would be exactly the kind of confident unbacked claim the
-rest of this plugin exists to find. The placeholder is filled at the publication gate; the
-first command above does not work until then.
-
-What does work today is a clone: `.claude-plugin/marketplace.json` sits at the repository
-root and names `./` as the plugin source, so the clone is itself a marketplace.
+A clone works too: `.claude-plugin/marketplace.json` sits at the repository root and names
+`./` as the plugin source, so the clone is itself a marketplace.
 
 ```
 /plugin marketplace add /path/to/your/clone/tully

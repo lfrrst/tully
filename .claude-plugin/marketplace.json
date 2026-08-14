@@ -1,8 +1,13 @@
 {
   "name": "tully",
+  "owner": {
+    "name": "Lucas Forrest",
+    "url": "https://github.com/lfrrst"
+  },
   "metadata": {
     "description": "Assurance over tools that produce financial deliverables, including ones an AI designed.",
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "repository": "https://github.com/lfrrst/tully"
   },
   "plugins": [
     {

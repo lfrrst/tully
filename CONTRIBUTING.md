@@ -180,25 +180,20 @@ amended mid-build and at least one describes a file that has since been deleted,
 a plan step and a shipped file disagree, the file is right and the plan is history.** Do not
 update them to match a change; update them only to record one.
 
-## Before publication
+## Publication — resolved
 
-Four things are deliberately unresolved, and they are listed together here because only two
-of them can carry a marker in the file — JSON has no comments, so there is nothing in the
-manifests for a reader to trip over.
+Four things were deliberately unresolved until the repository had an owner, because writing
+a plausible-looking value into any of them would have been the confident unbacked claim the
+rest of this plugin exists to find. All four are now set, in one change:
 
-1. **`README.md`** — `<owner>` in the `/plugin marketplace add <owner>/tully` install
-   block. Marked in the file, with the reason, and the clone route beneath it does work.
-2. **`LICENSE`** — the copyright holder, a bracketed placeholder on line 3. Marked in the
-   file.
-3. **`.claude-plugin/plugin.json`** — no `author`, `homepage` or `repository` key. Their
-   absence *is* the placeholder, and nothing in the file says so.
-4. **`.claude-plugin/marketplace.json`** — no owner field, on either the marketplace or the
-   plugin entry. Same reason, same invisibility.
+1. **`README.md`** — the install block names the real owner.
+2. **`LICENSE`** — the copyright holder is set.
+3. **`.claude-plugin/plugin.json`** — `author`, `homepage` and `repository` are present.
+4. **`.claude-plugin/marketplace.json`** — the marketplace carries an owner and a repository
+   URL.
 
-All four wait on one fact: this repository has no remote and has never been published, so
-there is no owner, org, URL or named holder that belongs in any of them. Writing a
-plausible-looking one would be the confident unbacked claim the rest of this plugin exists
-to find, which is why they are a decision for the author at the publication gate rather than
-a task a contributor can pick up. Resolve all four in one change, and check this list
-against the files rather than trusting it — a list of placeholders is itself something that
-goes stale.
+Two of the four could never carry an in-file marker, because JSON has no comments and the
+absence of a key *is* the placeholder. That is why they were listed here rather than left to
+be noticed. **If you add another value that has to wait on a fact outside the repository,
+list it here** — and check the list against the files rather than trusting it, because a
+list of placeholders is itself something that goes stale.
