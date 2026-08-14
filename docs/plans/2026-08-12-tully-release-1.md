@@ -15,6 +15,23 @@
 Every task's requirements implicitly include this section.
 
 - **Python floor: 3.10.** `citation_check.py` uses `Path | None` under `from __future__ import annotations`. Standard library only at runtime; `pytest` is a dev dependency.
+
+- **Environment prerequisite: a real Python interpreter must be on `PATH` before Task 1.** This was an unstated assumption in the plan's first draft and it blocked Task 1 on the machine this was written on.
+
+  On Windows, `python` and `python3` frequently resolve to zero-byte Microsoft Store *app execution aliases* rather than an interpreter. The trap that matters: **the stub prints "Python was not found" and exits 0.** A step that runs `python -m pytest` against the stub therefore looks like a pass — a check that cannot fail, in the build for the plugin that catalogues them. Verify the interpreter before relying on any test result:
+
+  ```bash
+  python --version   # must print a version; "Python was not found" means the stub
+  which python       # must NOT be under .../Microsoft/WindowsApps/
+  ```
+
+  Where a real interpreter is installed but shadowed by the stubs, prepend it per shell invocation rather than editing persistent `PATH`:
+
+  ```bash
+  export PATH="<python-dir>:<python-dir>/Scripts:$PATH"
+  ```
+
+  Every local command in this plan that begins `python` assumes that has been done. **CI is unaffected** — it runs on `ubuntu-latest` where `actions/setup-python` puts a real interpreter on `PATH`, so the workflow keeps bare `python` and must not be changed to a local path.
 - **No remote may be added and nothing may be pushed.** Spec D11. The repo stays local until the author clears the publication gate. No task performs `git remote add`, `git push`, or repository creation.
 - **Client-derived content is never committed, not even once.** Spec D12. Anonymise in the working copy before the first `git add` of any affected file.
 - **This plan never states an original client value.** It states only replacements. That is deliberate and it is a constraint on the plan itself, not only on the repo: this file is committed and will be published, so a substitution table listing the originals here would publish exactly what the anonymisation removes. The originals live in two places, neither of which is ever committed — `$SRC`, which the implementer reads directly, and `docs/anonymisation-review-aid.md`, which is git-ignored.
@@ -31,7 +48,7 @@ Every task's requirements implicitly include this section.
   | `finding-patterns.md` line 81, the inherited account code | `41204` |
   | `finding-patterns.md` line 81, the failing source row number | `118` |
   | `finding-patterns.md` line 81, the preceding source row number | `117` |
-  | every occurrence of the phrase introducing the source engagement | `In the engagement this catalogue was written from` |
+  | every occurrence of the phrase introducing the source engagement | `In the engagement this <noun> was written from`, where `<noun>` names the document it appears in — `catalogue` in `finding-patterns.md`, `phase` in a phase skill, `review` elsewhere |
 
   Fictional systems, chosen once: source system **Ledgerline Fund Accounting**, target system **Aurora ERP**. No client is named at all.
 
@@ -52,7 +69,7 @@ Every task's requirements implicitly include this section.
 
 Two of the ten tasks build Python and get ordinary TDD. The other eight produce Markdown, where the honest test cycle is:
 
-1. Write `evals/evals.json` **first** — it is the specification of what the skill must do, written before the skill.
+1. Write `evals/evals.json` **first** — it is the specification of what the skill must do, written before the skill. Every eval carries `"files": []` throughout: the prompts are conversational and the grader runs the skill against them, so no fixture is needed. Assertions are phrased as completed actions because they describe the procedure a correct response commits to, not work the grader performs. That convention is settled for the whole plan and is not a per-task decision.
 2. Run `tools/validate_skills.py`, which fails because the skill does not exist yet.
 3. Write the skill.
 4. Run the validator; it passes.
@@ -133,10 +150,14 @@ def test_missing_skill_md_fails(tmp_path):
 
 
 def test_name_mismatch_fails(tmp_path):
-    make_skill(tmp_path, "real-name", frontmatter_name="other-name")
+    # The fixture directory name must not contain any word the assertion checks
+    # for. The validator prints one result line per directory, so a fixture named
+    # "real-name" would satisfy `assert "name" in stdout` from its own name alone
+    # and the test would pass whether or not the mismatch was detected.
+    make_skill(tmp_path, "alpha", frontmatter_name="beta")
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "name" in r.stdout
+    assert "frontmatter name is 'beta', expected 'alpha'" in r.stdout
 
 
 def test_missing_description_fails(tmp_path):
@@ -182,11 +203,36 @@ def test_evals_skill_name_mismatch_fails(tmp_path):
 
 
 def test_empty_evals_list_fails(tmp_path):
-    make_skill(tmp_path, "empty-evals",
-               evals_body={"skill_name": "empty-evals", "evals": []})
+    # Named "barren" rather than "empty-evals" for the same reason as
+    # test_name_mismatch_fails: the assertion must not be satisfiable by the
+    # fixture's own directory name appearing in the result line.
+    make_skill(tmp_path, "barren", evals_body={"skill_name": "barren", "evals": []})
     r = run(tmp_path)
     assert r.returncode == 1
-    assert "evals" in r.stdout
+    assert "has an empty evals list" in r.stdout
+
+
+def test_missing_evals_json_fails(tmp_path):
+    d = make_skill(tmp_path, "no-evals-file")
+    (d / "evals" / "evals.json").unlink()
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "evals/evals.json is missing" in r.stdout
+
+
+def test_unterminated_frontmatter_fails(tmp_path):
+    d = make_skill(tmp_path, "unterminated")
+    (d / "SKILL.md").write_text("---\nname: unterminated\ndescription: x\n",
+                                encoding="utf-8")
+    r = run(tmp_path)
+    assert r.returncode == 1
+    assert "no terminated YAML frontmatter" in r.stdout
+
+
+def test_nonexistent_skills_dir_exits_two(tmp_path):
+    r = run(tmp_path / "absent")
+    assert r.returncode == 2
+    assert "no such skills directory" in r.stderr
 
 
 def test_reports_every_failure_not_just_the_first(tmp_path):
@@ -196,6 +242,8 @@ def test_reports_every_failure_not_just_the_first(tmp_path):
     assert r.returncode == 1
     assert "first-bad" in r.stdout and "second-bad" in r.stdout
 ```
+
+Three of these cover branches the first draft of this plan left untested — a missing evals file, unterminated frontmatter, and the exit-2 path for a directory that does not exist. That last one is the branch a fresh clone actually hits, which is why Step 8 below commits `skills/.gitkeep`.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -335,7 +383,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `python -m pytest tools/tests/test_validate_skills.py -v`
-Expected: 11 passed. If `test_reports_every_failure_not_just_the_first` fails, the validator is returning early — it must accumulate across skills.
+Expected: 14 passed. If `test_reports_every_failure_not_just_the_first` fails, the validator is returning early — it must accumulate across skills.
 
 - [ ] **Step 5: Write the manifests**
 
@@ -436,17 +484,31 @@ Then create `docs/anonymisation-review-aid.md` with a header explaining what it 
 
 Read the originals from `$SRC` at the lines given in the Global Constraints replacement table. Do not transcribe them into any file other than this one.
 
-- [ ] **Step 9: Verify the validator runs clean against an empty skills tree**
+- [ ] **Step 9: Commit `skills/.gitkeep` so a fresh checkout has the directory**
 
-Run: `mkdir -p skills && python tools/validate_skills.py`
+```bash
+mkdir -p skills && touch skills/.gitkeep
+python tools/validate_skills.py
+```
+
 Expected: `0 skills checked, 0 problems`, exit 0. This is the state Task 3 starts from.
+
+`.gitkeep` is not decoration. **Git does not track empty directories**, so without it `skills/` exists on the machine that ran this step and is absent from the commit — and CI's `python tools/validate_skills.py` hits the exit-2 missing-directory branch on a fresh checkout. The failure is invisible locally, because the local `skills/` is sitting right there untracked. Verify the fix against the commit rather than the working tree:
+
+```bash
+git ls-tree -r HEAD --name-only | grep "^skills/"
+```
+
+Expected: `skills/.gitkeep`. An empty result means CI will be red at this commit.
+
+Leaving the validator's exit 2 for a missing directory is correct and stays — it is the right answer when someone passes a bad `--skills-dir`. The defect was never the exit code; it was shipping a commit whose default invocation triggers it.
 
 - [ ] **Step 10: Commit**
 
 ```bash
 git status --short docs/
 # expected: docs/anonymisation-review-aid.md does NOT appear
-git add tools .claude-plugin .github .gitignore
+git add tools .claude-plugin .github .gitignore skills/.gitkeep
 git commit -m "$(cat <<'EOF'
 Add repo scaffold, plugin manifests, and the skill validator
 
@@ -659,7 +721,7 @@ If a test reveals a defect, fix the script, re-run, and describe the defect in t
 - [ ] **Step 4: Run the full suite to confirm nothing else broke**
 
 Run: `python -m pytest -q`
-Expected: all tests pass — 11 validator tests plus 12 citation tests.
+Expected: all tests pass — 14 validator tests plus 12 citation tests.
 
 - [ ] **Step 5: Commit**
 
@@ -735,7 +797,7 @@ Create `skills/establish-the-truth/evals/evals.json`:
         "Writes the manifest with EXECUTED: no rather than skipping it",
         "Records the specific reason execution failed",
         "States plainly that the review is worth less and the reader must be told",
-        "Fabricates no figures",
+        "Leaves the FIGURES table empty rather than populating it from the changelog or documentation, and says the emptiness is itself part of what the review reports",
         "Names what downstream work becomes unverifiable"
       ],
       "files": []
@@ -856,10 +918,16 @@ Body, adapted from `$SRC/SKILL.md` Phase 1 (lines 25–39). It must contain:
 
 Write proper prose, not bullet soup. The source is the model for register.
 
+**Define every downstream artifact you name, on first use.** This skill declares itself standalone, so it can run with no sibling skill loaded and no shared vocabulary established. Terms like *both books*, *the execution spine*, *the checklist*, and *the verification pass* mean nothing to a reader who arrived here directly, and two of them sit in the instruction that fires on the un-runnable path — where the reader most needs to be told plainly that the review is worth less. Gloss each in a clause on first use, and where an instruction defers a disclosure to a document that may never be written, say to make the disclosure in the answer *now* as well.
+
+This rule applies to all six skills, not only this one.
+
 - [ ] **Step 5: Run the validator to verify it passes**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok establish-the-truth`, exit 0.
+Expected: `ok    establish-the-truth` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported.
+
+The exit code is 1, not 0, from here until Task 7. `skills/check-the-facts/` has existed since Task 2 holding only `scripts/` and `tests/`; its `SKILL.md` arrives in Task 7. **Do not stub it to make the gate green** — the gate for this task is your own skill's line reading `ok`.
 
 - [ ] **Step 6: Read the skill against its own eval assertions**
 
@@ -1070,6 +1138,12 @@ the same order. Roughly one line citation per 50 words — below that you are
 writing from memory. A section that describes a module in three good paragraphs
 and moves on has failed, however well written it is.
 
+Module-level constants, hard-coded account numbers, default configurations and
+sentinel values get their own subsections. They are what someone changes, and
+they are where a change does damage — so they are finding-bearing in a way an
+ordinary function is not, and they are easy to walk past because they sit
+outside every function you were asked to document.
+
 If you are asked for the execution spine rather than a layer, produce a numbered
 table instead: stage, the line the stage is called at, what it adds, and the
 state of the data at that point including population sizes. Then three to five
@@ -1096,7 +1170,7 @@ Body, from `$SRC/SKILL.md:41-64`. It must contain:
 1. **The layer split**: three to five groups along the layers the code actually has, with the typical grouping named (input and configuration; transformation core; orchestration and controls; output, interface and tests) and an instruction to adapt to what is there.
 2. **Parallel dispatch** of one `code-mapper` agent per group, and a pointer to `references/function-entry.md` as the shared template.
 3. **The execution spine** as a distinct deliverable from one agent, with why it matters: nothing else in the tool makes sense without knowing what has and has not yet happened at a given moment, and ordering defects are only visible against it.
-4. **The depth expectation stated explicitly**, with a pointer to the reference, and the sentence that a section describing a module in three good paragraphs has failed however well written it is.
+4. **The depth expectation stated explicitly**, with a pointer to the reference, and the sentence that a section describing a module in three good paragraphs has failed however well written it is. **Name module-level material as part of it** — constants, hard-coded account numbers, default configurations, sentinel values, each getting its own subsection. It is where a change does damage, it sits outside every function an agent was asked to document, and it is the one element of the depth target that would otherwise live only in the reference, where an agent working from its own system prompt never sees it.
 5. **The sequential fallback** for no subagent tool, carried over in full: work the layers yourself in the same order, one at a time, writing each section to its own file before starting the next; do not hold four in context at once because quality collapses in the last one; check your own section against the depth target before moving on; after the last section re-read the execution spine against the finished sections hunting specifically for ordering defects; and say in §1 of the finished document that the review was performed sequentially, because it changes what a reader should expect of its uniformity.
 6. **The standalone contract**:
    - *Needs:* `evidence/01-evidence-base.md`, for the population column of the spine.
@@ -1106,7 +1180,7 @@ Body, from `$SRC/SKILL.md:41-64`. It must contain:
 - [ ] **Step 6: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok map-the-code`, exit 0.
+Expected: `ok    map-the-code` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5 — the exit code stays 1 until Task 7, and stubbing `check-the-facts` to green it is forbidden.
 
 - [ ] **Step 7: Read the skill and agent against the eval assertions**
 
@@ -1194,10 +1268,26 @@ Create `skills/hunt-the-findings/evals/evals.json`:
         "Does not simply agree with the user's inference"
       ],
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Nobody mapped the ordering — there's no execution spine. Work the catalogue anyway.",
+      "expected_output": "Should work the classes it can and produce findings rather than refusing. Should name the classes it could not attempt, specifically and by catalogue section, rather than reporting a clean sweep — a catalogue silently worked at half coverage reads identically to one worked fully. Should disclose the gap both in its own answer and at the top of evidence/03-findings.md, and say that neither channel discharges the other, because the verification pass opens the file without the conversation attached and an unmarked gap reads there as ground covered and found clean. Should offer to build the spine first and say what it would add.",
+      "assertions": [
+        "Produces findings rather than refusing",
+        "Names the classes it could not attempt, by catalogue section",
+        "Does not report or imply a clean sweep across all twelve classes",
+        "Discloses the gap in its own answer and at the top of evidence/03-findings.md",
+        "States that neither channel discharges the other, and why the readers differ",
+        "Offers to build the execution spine first and says what it would add"
+      ],
+      "files": []
     }
   ]
 }
 ```
+
+The fourth eval exists because the degraded mode is the requirement most likely to rot silently: a skill that quietly works nine of twelve classes produces output indistinguishable from one that worked all twelve. Both sibling skills give their degraded path an eval; this one needs the same, and it is the coverage Task 7's verification pass depends on.
 
 - [ ] **Step 2: Run the validator to verify it fails**
 
@@ -1238,18 +1328,373 @@ Now append a second section, **Flagged for author judgement** — items that are
 - `SKILL.md` and the phase-5 material retain three statistics about the review itself — a count of a tool's own passing assertions, the errors a verification pass caught across two documents, and the errors a self-verification caught without a subagent. Retained deliberately under the §13 rule that statistics about the review stay; flagged so the author confirms that reading rather than inheriting it.
 - Any defect description detailed enough to identify the engagement without naming it. §5's context-leak case is the one to look at hardest, since a chart-of-accounts conversion with an inherited-code defect is a recognisable combination even with every figure changed.
 
-- [ ] **Step 5: Verify no client data will be staged**
+- [ ] **Step 5: Build the leak checker, test first**
 
-Build the pattern list from the aid rather than from this plan, so no original value is ever written into a tracked file. The aid's first column is the original values; extract them and grep for them:
+A line-based `grep -F -f` cannot do this job, and discovering that late would be expensive. Markdown is hard-wrapped, so an original value like a row count followed by an amount can straddle a newline in the anonymised prose — and a line-based search reports **clean** on a file that still contains it. That is a check that cannot fail in the negative direction, guarding the one constraint in this project that is unrecoverable if it fails.
 
-```bash
-awk -F'|' '/^\|/ && NF>2 {gsub(/^ +| +$/,"",$2); if ($2 != "" && $2 !~ /original/) print $2}' \
-  docs/anonymisation-review-aid.md > /tmp/tully-originals.txt
-grep -rInFf /tmp/tully-originals.txt skills/ && echo "LEAK — do not stage" || echo "clean"
-rm -f /tmp/tully-originals.txt
+Create `tools/tests/test_leak_check.py` first:
+
+```python
+import subprocess
+import sys
+from pathlib import Path
+
+CHECKER = Path(__file__).resolve().parents[2] / "tools" / "leak_check.py"
+
+
+def run(aid: Path, *targets):
+    return subprocess.run([sys.executable, str(CHECKER), "--aid", str(aid), *map(str, targets)],
+                          capture_output=True, text=True)
+
+
+def write_aid(tmp_path: Path, rows) -> Path:
+    lines = ["# aid", "", "| original | replacement | file | line |", "|---|---|---|---|"]
+    lines += [f"| {o} | {r} | f.md | 1 |" for o, r in rows]
+    p = tmp_path / "aid.md"
+    p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return p
+
+
+def test_clean_tree_exits_zero(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "PUBLICVALUE")])
+    (tmp_path / "doc.md").write_text("nothing sensitive here\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    assert "clean" in r.stdout
+
+
+def test_same_line_leak_is_found(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "PUBLICVALUE")])
+    (tmp_path / "doc.md").write_text("this holds SECRETVALUE inline\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+    assert "SECRETVALUE" in r.stdout
+    assert "doc.md:1" in r.stdout
+
+
+def test_leak_wrapped_across_a_newline_is_found(tmp_path):
+    # The whole point. A line-based grep misses this.
+    #
+    # The figures below are invented. They have to be: a fixture is a tracked file,
+    # and this project's one unrecoverable rule is that no real client value enters
+    # history. Any multi-token string straddling the newline exercises the behaviour
+    # under test, so nothing is lost by making them up, and using a real one to
+    # illustrate a leak check would be the leak.
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "doc.md").write_text("the defect covered 63 rows\ncarrying $7M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+    assert "doc.md:1" in r.stdout
+
+
+def test_empty_pattern_list_is_an_error_not_a_pass(tmp_path):
+    aid = write_aid(tmp_path, [])
+    (tmp_path / "doc.md").write_text("anything\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 2
+    assert "no patterns" in r.stderr
+
+
+def test_missing_aid_is_an_error(tmp_path):
+    r = run(tmp_path / "absent.md", tmp_path)
+    assert r.returncode == 2
+    # Assert the message, not just the code. Exit 2 is also what a deleted script
+    # and any argparse usage error produce, so a bare returncode check passes with
+    # the tool absent or its flag renamed — it cannot fail for the right reason.
+    assert "no such aid file" in r.stderr
+
+
+def test_leak_inside_hash_prefixed_comment_lines_is_found(tmp_path):
+    # The case that matters most: this repo's convention is multi-line, #-prefixed
+    # fixture comments, and that is exactly where this project's one real leak lived.
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "mod.py").write_text("# the defect covered 63 rows\n# carrying $7M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "mod.py")
+    assert r.returncode == 1
+    assert "mod.py:1" in r.stdout
+
+
+def test_leak_inside_a_blockquote_is_found(tmp_path):
+    aid = write_aid(tmp_path, [("63 rows carrying $7M", "about 50 rows")])
+    (tmp_path / "doc.md").write_text("> the defect covered 63 rows\n> carrying $7M gross\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+
+
+def test_match_is_case_insensitive(tmp_path):
+    aid = write_aid(tmp_path, [("Ledgerline Fund Accounting", "the source system")])
+    (tmp_path / "doc.md").write_text("migrated from ledgerline fund accounting\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 1
+
+
+def test_a_target_that_does_not_exist_is_an_error(tmp_path):
+    # A typo'd path must not read as a clean tree. This is the fail-open case.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    r = run(aid, tmp_path / "no-such-directory")
+    assert r.returncode == 2
+    assert "no such target" in r.stderr
+
+
+def test_scanning_zero_files_is_an_error(tmp_path):
+    # An empty directory means the gate proved nothing; saying "clean" would be a lie.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    r = run(aid, empty)
+    assert r.returncode == 2
+    assert "no files" in r.stderr
+
+
+def test_file_count_is_reported(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    (tmp_path / "a.md").write_text("fine\n", encoding="utf-8")
+    (tmp_path / "b.md").write_text("also fine\n", encoding="utf-8")
+    r = run(aid, tmp_path)
+    assert r.returncode == 0, r.stdout
+    # The pattern count alone cannot show the gate scanned anything.
+    assert "2 files" in r.stdout
+
+
+def test_aid_header_row_is_not_treated_as_a_pattern(tmp_path):
+    aid = tmp_path / "aid.md"
+    aid.write_text("| Original value | replacement | file | line |\n|---|---|---|---|\n"
+                   "| SECRETVALUE | x | f.md | 1 |\n", encoding="utf-8")
+    (tmp_path / "doc.md").write_text("this mentions the Original value column\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    assert "1 patterns" in r.stdout
+
+
+def test_directory_target_is_walked(tmp_path):
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "deep.md").write_text("SECRETVALUE\n", encoding="utf-8")
+    r = run(aid, sub)
+    assert r.returncode == 1
+    assert "deep.md:1" in r.stdout
+
+
+def test_the_aid_itself_is_never_scanned(tmp_path):
+    # The aid contains every original by definition; scanning it would always "leak".
+    # A second, clean file is present deliberately: without it the run scans nothing
+    # and trips the only-the-aid guard, so the test would pass for the wrong reason.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    (tmp_path / "clean.md").write_text("nothing sensitive\n", encoding="utf-8")
+    r = run(aid, tmp_path)
+    assert r.returncode == 0, r.stdout
+    assert "1 files" in r.stdout
+
+
+def test_only_the_aid_in_scope_is_an_error(tmp_path):
+    # If the aid is the only file in scope, nothing was checked and "clean" would lie.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    r = run(aid, tmp_path)
+    assert r.returncode == 2
+    assert "only the aid" in r.stderr
 ```
 
-Expected: `clean`. **If it prints `LEAK`, do not stage anything.**
+Run it and watch it fail:
+
+`python -m pytest tools/tests/test_leak_check.py -v`
+Expected: all 15 FAIL — `tools/leak_check.py` does not exist.
+
+Watch one of them specifically. `test_missing_aid_is_an_error` asserts both the exit code **and** the stderr message, because exit 2 is what a deleted script and any argparse usage error also produce — a bare returncode check there passes with the tool absent, which makes it the one test in the file that cannot fail for the right reason.
+
+Then create `tools/leak_check.py`:
+
+```python
+#!/usr/bin/env python3
+"""Search a tree for original client values listed in the anonymisation review aid.
+
+Insensitive to whitespace, line-leading markup, and case — each because a
+line-based search fails open, and a gate on an unrecoverable rule must fail shut.
+Prose and comments here are hard-wrapped, so a value can straddle a newline, and
+the continuation line usually carries a prefix (`# `, `> `, `- `). Collapsing
+whitespace alone is not enough: the prefix lands inside the joined text and the
+value stops matching. This project's one real leak lived in a hash-prefixed
+fixture comment, which is why that case has its own test.
+
+    python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs
+
+Exit codes:
+    0  every pattern checked against at least one file, nothing matched
+    1  something matched
+    2  the check proved nothing, and saying "clean" would be a lie — a missing aid,
+       an aid with no patterns, a target that does not exist, no files under the
+       targets, or only the aid in scope
+
+The aid is never scanned: it holds every original by definition. The output states
+how many files were scanned, because the pattern count alone cannot show that
+anything was read.
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".superpowers", ".venv", "node_modules"}
+
+# An allow-list of text suffixes fails open: a value in a .csv or .html goes unseen
+# and the gate still says clean. Skip only what cannot hold readable text.
+BINARY_SUFFIXES = {
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".pdf", ".zip", ".gz", ".tar",
+    ".7z", ".xls", ".xlsx", ".xlsm", ".doc", ".docx", ".ppt", ".pptx", ".so", ".dll",
+    ".exe", ".pyc", ".whl", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4", ".jar",
+}
+
+
+def patterns_from_aid(aid: Path) -> list[str]:
+    """First column of every data row of the aid's markdown table."""
+    out: list[str] = []
+    for line in aid.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        first = cells[0]
+        # `startswith`, not `==`: the real aid's header cell reads "Original value",
+        # and an unskipped header becomes a live pattern — a false positive, and it
+        # inflates the pattern count that is meant to prove the gate is not vacuous.
+        if not first or set(first) <= set("-: ") or first.lower().startswith("original"):
+            continue
+        out.append(first)
+    return out
+
+
+def flatten(raw: str, strip_markup: bool) -> tuple[str, list[int]]:
+    """Collapse the text to single-spaced form, tracking the source line per character.
+
+    With strip_markup, a run of comment, quote or list markers at the start of a
+    line is dropped first, so a value wrapped across `# ` or `> ` prefixed lines
+    still reads as continuous text. Without it, such a prefix would sit inside the
+    joined string and the value would not match.
+    """
+    out: list[str] = []
+    line_of: list[int] = []
+    for line_no, line in enumerate(raw.split("\n"), 1):
+        body = re.sub(r"^[ \t]*[>#|*+\-]+[ \t]*", "", line) if strip_markup else line
+        for ch in body:
+            if ch in " \t":
+                if out and out[-1] != " ":
+                    out.append(" ")
+                    line_of.append(line_no)
+            else:
+                out.append(ch)
+                line_of.append(line_no)
+        if out and out[-1] != " ":       # a line break behaves as a space
+            out.append(" ")
+            line_of.append(line_no)
+    return "".join(out), line_of
+
+
+def iter_files(targets: list[Path]):
+    """Yield every candidate file, and report any target that does not exist."""
+    missing: list[Path] = []
+    found: list[Path] = []
+    for t in targets:
+        if t.is_file():
+            found.append(t)
+        elif t.is_dir():
+            for p in sorted(t.rglob("*")):
+                if p.is_file() and not (SKIP_DIRS & set(p.parts)) \
+                        and p.suffix.lower() not in BINARY_SUFFIXES:
+                    found.append(p)
+        else:
+            missing.append(t)
+    return found, missing
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--aid", required=True)
+    ap.add_argument("targets", nargs="+")
+    args = ap.parse_args()
+
+    aid = Path(args.aid)
+    if not aid.is_file():
+        print(f"no such aid file: {aid}", file=sys.stderr)
+        return 2
+    pats = patterns_from_aid(aid)
+    if not pats:
+        print("no patterns in the aid: the check would pass trivially", file=sys.stderr)
+        return 2
+
+    considered, missing = iter_files([Path(t) for t in args.targets])
+    if missing:
+        for m in missing:
+            print(f"no such target: {m}", file=sys.stderr)
+        return 2
+    if not considered:
+        print("no files under the given targets: the check proved nothing",
+              file=sys.stderr)
+        return 2
+
+    aid_resolved = aid.resolve()
+    scanned = 0
+    hits = []
+    for f in considered:
+        if f.resolve() == aid_resolved:
+            continue                      # holds every original by definition
+        scanned += 1
+        raw = f.read_text(encoding="utf-8", errors="replace")
+        views = (flatten(raw, False), flatten(raw, True))
+        for pat in pats:
+            npat = " ".join(pat.split()).casefold()
+            if not npat:
+                continue
+            for hay, line_of in views:
+                idx = hay.casefold().find(npat)
+                if idx != -1:
+                    hits.append((f, line_of[idx], pat))
+                    break                 # one report per pattern per file
+
+    if not scanned:
+        print("only the aid was in scope: the check proved nothing", file=sys.stderr)
+        return 2
+
+    print(f"{len(pats)} patterns checked against {scanned} files "
+          f"(the aid itself is never scanned)")
+    if not hits:
+        print("clean")
+        return 0
+    print("first occurrence per pattern per file only — treat as a gate, "
+          "not a cleanup inventory")
+    for f, line_no, pat in hits:
+        print(f"  LEAK  {f}:{line_no}  matches {pat!r}")
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+Run the tests again: `python -m pytest tools/tests/test_leak_check.py -v`
+Expected: 15 passed. Three tell you the most if they fail:
+
+- `test_leak_wrapped_across_a_newline_is_found` — the normalisation is not applied to both sides.
+- `test_leak_inside_hash_prefixed_comment_lines_is_found` — the markup-stripped second view is missing, and the case this project has actually been bitten by is unguarded.
+- `test_a_target_that_does_not_exist_is_an_error` or `test_scanning_zero_files_is_an_error` — the gate can still report `clean` having read nothing, which is the fail-open path that matters most.
+
+- [ ] **Step 6: Verify no client data will be staged**
+
+```bash
+python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills
+```
+
+Expected: a line reading `N patterns checked against M files`, both non-zero, followed by `clean`. **If it prints `LEAK`, do not stage anything.**
+
+Exit 2 means the check proved nothing and must be fixed before it is trusted: no aid, an aid with no rows, a target that does not exist, no files under the targets, or only the aid in scope. Read the stderr line — each of those says which. A gate that cannot distinguish "found nothing" from "read nothing" is the defect this tool exists to prevent, so it refuses to report `clean` in the second case.
 
 Then confirm the aid itself is not stageable:
 
@@ -1259,7 +1704,7 @@ git status --short docs/
 
 Expected: `docs/anonymisation-review-aid.md` does not appear.
 
-- [ ] **Step 6: Write the skill**
+- [ ] **Step 7: Write the skill**
 
 Create `skills/hunt-the-findings/SKILL.md`, frontmatter description verbatim:
 
@@ -1282,19 +1727,19 @@ Body, from `$SRC/SKILL.md:66-68` plus the warning it inherits from §"Things tha
    - *If that is missing:* without the execution spine the ordering-defect classes (catalogue §3) cannot be worked at all, and without an evidence base the classes needing measurement cannot be tested. Name the classes not attempted rather than reporting a clean sweep — a catalogue silently worked at half coverage reads identically to one worked fully.
    - *Hands back:* the path to `evidence/03-findings.md`.
 
-- [ ] **Step 7: Run the validator**
+- [ ] **Step 8: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok hunt-the-findings`, exit 0.
+Expected: `ok    hunt-the-findings` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5.
 
-- [ ] **Step 8: Read the skill against the eval assertions**
+- [ ] **Step 9: Read the skill against the eval assertions**
 
-Confirm all 18 assertions are satisfiable. Eval 3's "Does not simply agree with the user's inference" is the one at risk — the skill must be direct enough that a model reading it contradicts a user who has drawn the wrong conclusion.
+Confirm all 24 assertions across the four evals are satisfiable. Two are at risk. Eval 3's "Does not simply agree with the user's inference" needs the skill direct enough that a model contradicts a user who has drawn the wrong conclusion. Eval 4's "States that neither channel discharges the other, and why the readers differ" needs both halves — the rule and the reason — because the reason is what lets a reader apply it to a case the skill does not name.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add skills/hunt-the-findings
+git add skills/hunt-the-findings tools/leak_check.py tools/tests/test_leak_check.py
 git commit -m "$(cat <<'EOF'
 Add hunt-the-findings and the anonymised defect catalogue
 
@@ -1440,7 +1885,7 @@ Body, from `$SRC/SKILL.md:70-74` (phase 4), `:95-99` (phase 6), and four of the 
 - [ ] **Step 5: Run the validator**
 
 Run: `python tools/validate_skills.py`
-Expected: `ok write-the-books`, exit 0.
+Expected: `ok    write-the-books` on this skill's line, **exit 1**, with `check-the-facts: SKILL.md is missing` still reported. See Task 3 Step 5.
 
 - [ ] **Step 6: Read the skill against the eval assertions**
 
@@ -1534,7 +1979,11 @@ Create `skills/check-the-facts/evals/evals.json`:
 - [ ] **Step 2: Run the validator to verify it fails**
 
 Run: `python tools/validate_skills.py`
-Expected: exit 1. Note that `check-the-facts` already exists as a directory from Task 2 with `scripts/` and `tests/` but no `SKILL.md` and no `evals/`, so before Step 1 the validator reports two problems for it and after Step 1 exactly one — `check-the-facts: SKILL.md is missing`.
+Expected: exit 1, reporting **exactly one** problem — `check-the-facts: SKILL.md is missing`.
+
+`check-the-facts` has existed as a directory since Task 2, holding `scripts/` and `tests/` but no `SKILL.md` and no `evals/`. It reports one problem rather than two because `check_skill` returns immediately when `SKILL.md` is absent, so the `evals/evals.json` check is never reached. The count is therefore one both before and after Step 1, and writing the evals file does not change it. Verified by execution at Task 2.
+
+This is the expected state from Task 2 onward and must not be silenced with a stub `SKILL.md` or a placeholder `evals.json`.
 
 - [ ] **Step 3: Write the agent**
 
@@ -1625,7 +2074,12 @@ Expected: `ok check-the-facts`, exit 0. This also confirms the body's citations 
 
 - [ ] **Step 6: Read the skill and agent against the eval assertions**
 
-Confirm all 17 assertions are satisfiable. Eval 3's "Does not claim equivalence with a delegated pass" matters: the source is careful that the fallback is worse than delegation, and the skill must not flatten that into "either is fine".
+Confirm all 18 assertions are satisfiable — 8 in eval 1, 5 in each of evals 2 and 3. Eval 3's "Does not claim equivalence with a delegated pass" matters most: the source is careful that the fallback is worse than delegation, and the skill must not flatten that into "either is fine".
+
+Two things this step must also confirm, because both are easy to write past:
+
+- **The `fact-checker` agent has no `Write` tool** — its grant is `Read, Grep, Glob, Bash`. So the agent reports its errors back and *the skill* writes `evidence/04-verification-<book>.md`. If the skill instead tells the agent to write the file, the file never appears and the verification pass leaves no artifact for the next reader.
+- **The engagement-introducing phrase is a live leak pattern.** The phase-5 source opens the 26-error statistic with it, so transcribing that sentence as found would fail the confidentiality gate. Replace it the way every other file does, with the noun fitting this document.
 
 - [ ] **Step 7: Run the full suite**
 
@@ -1811,13 +2265,21 @@ argument-hint: "[path-to-tool] [--mode document|review|verify]"
 
 Invoke the `review-the-tool` skill for the target below.
 
-Target: $1
-Mode: $2 (omit to let the skill infer it from the request)
+Arguments as given: $ARGUMENTS
 
-If no target is given, ask for one before starting — do not review the current
-working directory by assumption, because staging the wrong tree wastes an hour
-of execution.
+Read them like this. The first bare word is the target — the tool to review. If
+`--mode` appears, the word after it is the mode, one of `document`, `review` or
+`verify`. Either may be absent.
+
+With no target, ask for one before starting. Do not review the working directory
+by assumption: staging the wrong tree wastes an hour of execution before anything
+reveals the mistake.
+
+With no mode, do not default — infer it from what the caller actually asked for,
+by the rule in the skill, and say which mode you inferred before you begin.
 ```
+
+`$ARGUMENTS` rather than positional `$1`/`$2`: with an `argument-hint` of `[path] [--mode X]`, `$2` receives the literal string `--mode` and the mode word lands in `$3`, so a positional reading renders the mode as `--mode`. Found at Task 9.
 
 Named `review.md` rather than `review-the-tool.md` so `/tully:review` and the skill `tully:review-the-tool` cannot be mistaken for each other in a transcript.
 
@@ -1937,21 +2399,21 @@ python tools/validate_skills.py
 python -m pytest -q
 
 # Pre-publication leak check, run locally only. The pattern list comes from the
-# git-ignored aid so no original value is ever written into a tracked file.
-awk -F'|' '/^\|/ && NF>2 {gsub(/^ +| +$/,"",$2); if ($2 != "" && $2 !~ /original/) print $2}' \
-  docs/anonymisation-review-aid.md > /tmp/tully-originals.txt
-wc -l < /tmp/tully-originals.txt   # expect 9 or more; 0 means the aid is empty and the check is vacuous
-grep -rInFf /tmp/tully-originals.txt --exclude-dir=.git . && echo "LEAK" || echo "no client identifiers found"
-rm -f /tmp/tully-originals.txt
+# git-ignored aid, so no original value is ever written into a tracked file.
+python tools/leak_check.py --aid docs/anonymisation-review-aid.md skills docs examples agents commands tools README.md CONTRIBUTING.md
 
-git log --all --oneline | wc -l
 git status --short
 git remote -v
 ```
 
-Expected: six skills `ok`; all tests pass; a non-zero pattern count followed by `no client identifiers found`; a clean working tree; **no remotes**.
+Expected: six skills `ok`; all tests pass; a non-zero pattern count followed by `clean`; a clean working tree; **no remotes**.
 
-The `wc -l` guard matters: a leak check whose pattern file is empty passes trivially and reports the same reassuring output as one that genuinely found nothing. That is the "check that cannot fail" pattern from the plugin's own catalogue, and it would be an embarrassing place to commit it.
+Two properties of `leak_check.py` are the reason it exists rather than a `grep`, and both were learned the hard way during this build:
+
+- **It is whitespace-insensitive across newlines.** Markdown is hard-wrapped, so an original value can straddle a line break in the anonymised prose. A line-based `grep -F -f` reports `clean` on a file that still contains it — a check that cannot fail in the direction that matters, guarding the one constraint here that is unrecoverable once breached.
+- **An empty pattern list is exit 2, not exit 0.** A leak check with no patterns passes trivially and prints the same reassuring output as one that genuinely found nothing.
+
+It also never scans the aid itself, which contains every original by definition.
 
 - [ ] **Step 8: Commit**
 
@@ -2026,7 +2488,7 @@ No gaps found. Spec §14's requirement of "one end-to-end eval on `review-the-to
 
 Two issues found and fixed while reviewing:
 
-- Task 7 Step 2's expected validator output originally said only `SKILL.md is missing`, but `check-the-facts` already exists as a directory from Task 2 without `evals/`, so the validator reports two problems before Step 1 and one after. Step 2 now says so.
+- Task 7 Step 2's expected validator output needed to account for `check-the-facts` already existing as a directory from Task 2 without `SKILL.md` or `evals/`. My first correction to it claimed two problems before Step 1 and one after; that was also wrong, and Task 2's implementer caught it. `check_skill` returns early on a missing `SKILL.md`, so the count is exactly one throughout and writing the evals file does not change it. Verified by execution and corrected again.
 - The validator's body-extraction line originally read `text[...] if fm else text`, which is dead code — the function has already returned when `fm` is None. Simplified to the unconditional slice.
 
 **4. Confidentiality of the plan itself.** This check is not in the writing-plans template and was added because the first draft of this plan failed it.
@@ -2038,3 +2500,13 @@ The first draft carried a substitution table listing every original client value
 - CI asserts the invariant that protects the values — that the aid is untracked — rather than grepping for them. The leak check runs locally, builds its pattern list from the aid, and guards against an empty pattern file, since a leak check with no patterns passes trivially and prints the same output as one that genuinely found nothing.
 
 That last point is the plugin's own "checks that cannot fail" pattern, caught in the plan for the plugin that catalogues it.
+
+**5. Amendments after Task 1's review.** Recorded here so the plan's history is legible rather than looking as though it was right first time.
+
+Task 1's code reviewer found three defects in code this plan supplied verbatim, all confirmed by execution and all fixed by amendment with the author's ruling:
+
+- **`skills/` was absent from Task 1's commit.** Git does not track empty directories, so the validator's exit-2 missing-directory branch is exactly what CI hits on a fresh checkout — while the local run passes, because the untracked directory is sitting right there. Step 9 now commits `skills/.gitkeep` and verifies against `git ls-tree` rather than the working tree.
+- **Three validator failure branches had no test.** Missing `evals.json`, unterminated frontmatter, and the exit-2 path above. Now covered, taking the suite from 11 tests to 14.
+- **Two tests passed for a reason unrelated to what they checked.** The validator prints one result line per directory, so a fixture named `real-name` satisfied `assert "name" in stdout` from its own directory name, and `empty-evals` satisfied `assert "evals" in stdout` the same way. Both fixtures are renamed and both assertions now match distinctive message text.
+
+The third is `finding-patterns.md` §9 — an assertion that cannot discriminate — in the test suite of the plugin that catalogues it. It is worth stating plainly that the catalogue caught its own author, and that a reviewer reading the diff caught it where the passing suite did not.

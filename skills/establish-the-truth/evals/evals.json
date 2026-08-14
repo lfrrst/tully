@@ -1,0 +1,46 @@
+{
+  "skill_name": "establish-the-truth",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to review this conversion script before we hand its output to the client. Where do I start?",
+      "expected_output": "Should stage the code and the real inputs into a scratch workspace rather than working in the original folder. Should run the tool's own test suite and record the exact pass count. Should execute the tool at least twice under settings that exercise genuinely different paths, and record a run identifier for each. Should measure the output by opening the files and counting rather than reading the tool's own summary. Should write evidence/01-evidence-base.md with EXECUTED, TOOL, VERSION, and a RUN section per run. Should not proceed to reading functions before output exists.",
+      "assertions": [
+        "Stages code and real inputs into a scratch workspace, leaving the original untouched",
+        "Brings the real inputs rather than synthetic data, and says why",
+        "Records the tool's own test suite pass count exactly",
+        "Executes at least twice under genuinely different settings",
+        "Records a run identifier per run",
+        "Measures output by opening files and counting, not by reading the tool's summary",
+        "Writes evidence/01-evidence-base.md with the required fields",
+        "Records unreconciled observations rather than resolving them immediately"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "can you run this thing twice and tell me what it actually spits out",
+      "expected_output": "Should trigger on casual phrasing. Should recognise this as establishing a baseline and execute under two different settings. Should report measured figures — row counts, totals, blank counts in columns that should never be blank — attributed to each run rather than quoting the tool's own reported numbers.",
+      "assertions": [
+        "Triggers on casual phrasing without the words baseline or evidence",
+        "Executes under two different settings rather than twice identically",
+        "Reports figures it measured itself",
+        "Attributes every figure to a named run"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The tool needs a licensed database driver we don't have, so it won't run here. Do the review anyway.",
+      "expected_output": "Should still produce evidence/01-evidence-base.md, with EXECUTED: no and REASON-NOT-EXECUTED naming the missing driver. Should state plainly that a review that cannot run the tool is worth much less and that the reader must know that before relying on it. Should not fabricate figures, and should not silently continue as though a baseline existed. Should say which downstream work is now unverifiable.",
+      "assertions": [
+        "Writes the manifest with EXECUTED: no rather than skipping it",
+        "Records the specific reason execution failed",
+        "States plainly that the review is worth less and the reader must be told",
+        "Leaves the FIGURES table empty rather than populating it from the changelog or documentation, and says the emptiness is itself part of what the review reports",
+        "Names what downstream work becomes unverifiable"
+      ],
+      "files": []
+    }
+  ]
+}

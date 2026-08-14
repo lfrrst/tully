@@ -1,0 +1,49 @@
+{
+  "skill_name": "review-the-tool",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We built a conversion tool with a lot of AI help and it's about to feed a client's opening balances. Can we rely on it?",
+      "expected_output": "Should infer review mode and say so before starting, naming what it will and will not produce. Should classify the artifact as deterministic code and dispatch the registered path. Should run the phases in order: establish-the-truth, map-the-code, hunt-the-findings, write-the-books, check-the-facts. Should state the doctrine that a figure you did not produce by executing something is not evidence. Should separate what the tool attests from what it detects. Should create the evidence folder skeleton before phase 1.",
+      "assertions": [
+        "Infers review mode and states it before starting phase 1",
+        "Names what the run will and will not produce",
+        "Classifies the artifact by inspection rather than asking the user to",
+        "Dispatches the five phase skills in order",
+        "Quotes the doctrine verbatim",
+        "Separates what the tool attests from what it detects",
+        "Creates the evidence folder skeleton first",
+        "Does not write the project record itself"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Just document what this script does — I'm not signing off on anything, I need to hand it to a new hire.",
+      "expected_output": "Should infer document mode and state it, along with what it will not produce: no checklist, no findings hunt, no assurance conclusion. Should still execute the tool where possible, because a documentation claim about an edge case is worth more when it can say verified. Should run establish-the-truth and map-the-code, then write-the-books limited to the code review. Should require the finished document to state on page one that it is documentation and not assurance.",
+      "assertions": [
+        "Infers document mode and states it",
+        "Names what document mode will not produce",
+        "Still executes the tool where possible and says why",
+        "Runs only establish-the-truth, map-the-code, and write-the-books",
+        "Requires the documentation-not-assurance statement on page one",
+        "Produces no assurance language"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Review this allocation model for me — it's an Excel workbook with about forty tabs of formulas.",
+      "expected_output": "Should classify the artifact as a spreadsheet, find no registered path for it, say so plainly, and stop. Should explain why it will not force the code path: a spreadsheet forced through a code-shaped review produces a confident and badly wrong document, which is the failure this plugin exists to catch. Should say what a spreadsheet path would need — cell-level citation rather than line-level, formula dependency tracing, hardcode detection — and offer what it can legitimately do instead.",
+      "assertions": [
+        "Classifies the artifact as a spreadsheet",
+        "Reports that no registered path exists and stops",
+        "Refuses to force the deterministic-code path",
+        "Explains why forcing it would be worse than declining",
+        "Says what a spreadsheet path would require",
+        "Offers a legitimate alternative rather than only refusing"
+      ],
+      "files": []
+    }
+  ]
+}

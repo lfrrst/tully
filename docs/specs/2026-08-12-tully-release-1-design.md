@@ -169,11 +169,19 @@ Owns the *detection* half of the "figure from a different run" failure.
 
 | Mode | Runs | Produces | Rule that governs it |
 |---|---|---|---|
-| `document` | establish → map | Code review book only | Still executes where it can, because a documentation claim about an edge case is worth more when it says "verified:". Tolerates `EXECUTED: no` far more gracefully than `review`. Must state on page one that it is documentation and not assurance |
-| `review` (default) | all six phases | Both books | The full engagement |
+| `document` | establish → map → write | Code review book only | Still executes where it can, because a documentation claim about an edge case is worth more when it says "verified:". Tolerates `EXECUTED: no` far more gracefully than `review`. Must state on page one that it is documentation and not assurance |
+| `review` (default) | all five dispatched skills | Both books | The full engagement |
 | `verify` | `check-the-facts` alone | An error list | Works against any document carrying `file.ext:NNN` citations, including one a previous reviewer or another AI wrote, and including the previous version of your own book |
 
 The books are produced together by default because they need each other: the checklist's compensating procedures exist only because the code review found the gaps they compensate for. If the user asks for only one, produce that one — but still do the research phase in full, because a checklist written without reading the code is a generic checklist.
+
+**Two errata, both found at Task 8.**
+
+**One.** This table originally described `document` mode as "establish → map", which cannot be right: the mode produces a code review book, and the phase that writes books is `write-the-books`. The mode runs three skills, with `write-the-books` limited to the code review and its findings section marked not-performed. The shorthand named the research phases and silently dropped the one that produces the deliverable — the kind of gap that survives because the "Produces" column looks correct beside it.
+
+**Two.** The `review` row said "all six phases", counting the monolith's phases rather than this plugin's dispatches. There are **five** dispatched skills; the sixth is the orchestrator doing the dispatching, and the monolith's phase 6 folded into `write-the-books` as the tail of its own run. Related: the project record is **not** a guaranteed sixth deliverable. `write-the-books` writes it only where a project or knowledge base is attached to the session, and any document naming it must carry that condition.
+
+Both errata were counting mistakes in a summary table beside a correct "Produces" column, which is why neither was visible until a skill had to act on the table rather than read it.
 
 ## 7. The engagement folder
 

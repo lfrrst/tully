@@ -1,0 +1,49 @@
+{
+  "skill_name": "map-the-code",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Document every function in this conversion tool. It's about 10,000 lines across four modules.",
+      "expected_output": "Should split the modules into three to five groups along the layers the code actually has and dispatch one code-mapper agent per group in parallel. Should ask one agent for the execution spine. Should state the depth target explicitly: a heading per function, four labelled paragraphs under each, roughly one line citation per 50 words, private helpers included where they carry real logic. Should write to files and expect paths back rather than prose in the reply. Should say that a section describing a module in three good paragraphs has failed however well written it is.",
+      "assertions": [
+        "Splits into three to five groups along the code's actual layers",
+        "Dispatches one code-mapper agent per group, in parallel",
+        "Requests the execution spine as a distinct deliverable",
+        "States the depth target with a heading per function and four labelled paragraphs",
+        "Names the citation density target",
+        "Includes private helpers that carry real logic",
+        "Requires agents to write to files and return paths",
+        "Names summarising-instead-of-documenting as the failure mode to avoid"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "what does this function actually do, and what does it assume",
+      "expected_output": "Should trigger on a single-function question and answer in the per-function template: what it does, how it does it with line citations, what it relies on stated specifically, and what happens when that reliance is violated. Should distinguish raising from silently coercing from dropping rows. Should not answer with a generic description or say the function assumes valid input.",
+      "assertions": [
+        "Triggers on a single-function question",
+        "Answers in the four-part template",
+        "Cites specific lines as file.ext:NNN",
+        "States assumptions specifically rather than as 'assumes valid input'",
+        "Names the failure mode as raise, coerce, drop, or return empty"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Map this code for me. There's no evidence base — nobody has run it yet.",
+      "expected_output": "Should produce the map regardless, because the map does not depend on execution. Should keep the execution spine's population column but fill it with 'not measured' rather than omitting the column or inventing numbers, and should not read a population off the documentation or a code comment into a cell a reader will take as measured. Should state at the top of its output that no baseline exists and which claims are therefore unverified, and write the same statement above the table in evidence/02-execution-spine.md — the file is the only channel a later phase sees, so a disclosure made only in the reply does not reach the finding hunt. Should carry both the not-measured rule and the prohibition on sentences beginning 'Verified:' into every code-mapper dispatch, since that agent writes the spine table and is handed no part of this conversation. Should offer to establish the baseline first and explain what it would add.",
+      "assertions": [
+        "Produces the map rather than refusing",
+        "Keeps the population column and fills it with 'not measured'",
+        "Fills the population column with 'not measured' in every row and takes no population from documentation or a code comment",
+        "States the degradation at the top of its own output",
+        "Writes the same statement above the table in evidence/02-execution-spine.md, not only in the reply",
+        "Carries the not-measured rule and the no-'Verified:' rule into the code-mapper dispatch",
+        "Offers to establish a baseline and says what it would add"
+      ],
+      "files": []
+    }
+  ]
+}

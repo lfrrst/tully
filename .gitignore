@@ -4,3 +4,5 @@ __pycache__/
 evidence/
 docs/anonymisation-review-aid.md
 .superpowers/
+.venv/
+*.egg-info/
