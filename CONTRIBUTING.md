@@ -91,10 +91,10 @@ the gate did not look. A check measured on the wrong population is §2 of this p
 catalogue; it can be green for the same reason a control that excludes the rows it would
 fail on is green.
 
-So read the gate's first line, not just its exit code. It reports both counts:
+So read the gate's first line, not just its exit code. It reports three counts:
 
 ```
-12 patterns checked against 38 files (the aid itself is never scanned)
+12 patterns checked against 38 files, 0 skipped outside the value table (the aid itself is never scanned)
 clean
 ```
 
@@ -103,9 +103,19 @@ the scan shrank. A target spelled wrong is caught for you — the tool exits 2 w
 `no such target` rather than skipping it — but a target *dropped from the list*, which is
 how the previous version came to scan 27, is not an error at all: the run reports a smaller
 number and still prints `clean`. That is the only place a narrowed gate is visible, so
-compare the count against the one above rather than reading the exit code alone. The
-pattern count is the same idea from the other side — it cannot show that anything was
-*read*, which is why the file count is printed beside it.
+compare the count against the one above rather than reading the exit code alone.
+
+**The pattern count used to have no analogous guard, and now it does.** The aid is
+hand-edited and grows tables, so a value row can land outside the table headed
+`Original…` — split off by a blank line, a subheading, or a short row above it — and
+an earlier version of this tool discarded such a row with no trace: the pattern count
+shrank silently while the gate still printed `clean` over the smaller population. The
+tool now exits 2 on any `|`-row it finds outside a recognised table, naming the line
+number in the aid, so growing the aid's tables is either safe or loud, never quiet.
+The skipped-row count is the third number above, printed even when it is zero — the
+file count still cannot show that anything was *read*, and now the pattern count
+cannot silently show *fewer values than the aid actually lists*, which is why both
+sit beside each other on the same line.
 
 The validator checks what CI can check mechanically: frontmatter present and matching the
 directory, a description within the length limit, no dangling reference paths, and an evals

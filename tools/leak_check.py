@@ -15,8 +15,9 @@ Exit codes:
     0  every pattern checked against at least one file, nothing matched
     1  something matched
     2  the check proved nothing, and saying "clean" would be a lie — a missing aid,
-       an aid with no value table or no patterns in it, a target that does not exist,
-       no files under the targets, or only the aid in scope
+       an aid with no value table or no patterns in it, a `|`-row in the aid that
+       sits outside any recognised table, a target that does not exist, no files
+       under the targets, or only the aid in scope
 
 The aid is never scanned: it holds every original by definition. The output states
 how many files were scanned, because the pattern count alone cannot show that
@@ -40,7 +41,7 @@ BINARY_SUFFIXES = {
 }
 
 
-def patterns_from_aid(aid: Path) -> list[str]:
+def patterns_from_aid(aid: Path) -> tuple[list[str], list[tuple[int, str]]]:
     """First column of every data row of the aid's value table, and of no other table.
 
     Scoped to the table whose header row's first cell begins "Original" — the real
@@ -53,30 +54,55 @@ def patterns_from_aid(aid: Path) -> list[str]:
     inflated past the number of real values, which is the signal destroyed.
 
     `startswith`, not `==`, on the header. A table ends at the first blank line after
-    it, or at the first line that is not a table row; rows outside a value table are
-    ignored. If the aid holds no such table, no patterns are returned and the caller
-    exits 2 rather than reporting clean.
+    it, or at the first line that is not a table row.
+
+    A `|`-row that sits outside the value table is not automatically a stray: this
+    hand-edited aid may legitimately carry other tables (a summary, a carried-over
+    list), and a row two lines below such a table's own header+separator belongs to
+    it, not to the gate's pattern list. That row is recognised and skipped without
+    comment. But a `|`-row that matches neither the value table nor a recognised
+    other table is exactly what a split value table looks like — cut by a blank
+    line, a subheading, or a short row resetting the flag above. The earlier fix
+    that scoped patterns to the value table discarded every such row with no trace,
+    which shrinks the pattern count silently. It is returned here instead, as
+    `(line_no, line)`, so the caller can exit 2 rather than report a smaller "clean".
     """
     out: list[str] = []
+    skipped: list[tuple[int, str]] = []
+    lines = aid.read_text(encoding="utf-8", errors="replace").splitlines()
     in_value_table = False
-    for line in aid.read_text(encoding="utf-8", errors="replace").splitlines():
+    in_other_table = False
+    for i, line in enumerate(lines):
         if not line.startswith("|"):
-            in_value_table = False        # a blank line or prose ends the table
+            in_value_table = False        # a blank line or prose ends any table
+            in_other_table = False
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 2:
-            in_value_table = False
+            in_value_table = False        # too short to be a table row
+            in_other_table = False
             continue
         first = cells[0]
         if first.lower().startswith("original"):
             in_value_table = True         # the value table's header row
+            in_other_table = False
             continue
-        if not in_value_table:
-            continue                      # a row belonging to some other table
         if not first or set(first) <= set("-: "):
             continue                      # the separator row, or an empty first cell
-        out.append(first)
-    return out
+        if in_value_table:
+            out.append(first)
+            continue
+        if in_other_table:
+            continue                      # a row of some other, already-recognised table
+        nxt = lines[i + 1] if i + 1 < len(lines) else ""
+        nxt_cells = ([c.strip() for c in nxt.strip().strip("|").split("|")]
+                     if nxt.startswith("|") else [])
+        if nxt_cells and all((not c) or (set(c) <= set("-: ")) for c in nxt_cells):
+            in_other_table = True         # this row is some OTHER table's header
+            continue
+        skipped.append((i + 1, line))     # an orphan: not the value table, not a
+                                           # recognised other table either
+    return out, skipped
 
 
 def flatten(raw: str, strip_markup: bool) -> tuple[str, list[int]]:
@@ -133,7 +159,21 @@ def main() -> int:
     if not aid.is_file():
         print(f"no such aid file: {aid}", file=sys.stderr)
         return 2
-    pats = patterns_from_aid(aid)
+    pats, skipped_rows = patterns_from_aid(aid)
+    if skipped_rows:
+        shown = skipped_rows[:5]
+        loc = ", ".join(f"line {n}" for n, _ in shown)
+        extra = len(skipped_rows) - len(shown)
+        if extra > 0:
+            loc += f", and {extra} more"
+        print(
+            f"{len(skipped_rows)} rows skipped outside the value table in the aid "
+            f"({loc}); the aid is hand-edited and grows tables, so a row here is "
+            f"exactly what a split value table looks like — move each row inside "
+            f"the value table, or reformat it as non-table text",
+            file=sys.stderr,
+        )
+        return 2
     if not pats:
         print("no patterns in the aid: the check would pass trivially", file=sys.stderr)
         return 2
@@ -171,7 +211,8 @@ def main() -> int:
         print("only the aid was in scope: the check proved nothing", file=sys.stderr)
         return 2
 
-    print(f"{len(pats)} patterns checked against {scanned} files "
+    print(f"{len(pats)} patterns checked against {scanned} files, "
+          f"{len(skipped_rows)} skipped outside the value table "
           f"(the aid itself is never scanned)")
     if not hits:
         print("clean")

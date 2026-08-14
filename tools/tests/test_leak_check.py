@@ -1,3 +1,4 @@
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -204,3 +205,69 @@ def test_only_the_aid_in_scope_is_an_error(tmp_path):
     r = run(aid, tmp_path)
     assert r.returncode == 2
     assert "only the aid" in r.stderr
+
+
+def test_row_outside_any_value_table_is_an_error(tmp_path):
+    # A `|`-row that never sits inside a recognised table -- the value table,
+    # or some other table with its own header+separator -- must not be
+    # silently discarded. That is exactly how the earlier fix (scoping
+    # patterns to the "Original..." table) went fail-open: it stopped a
+    # second table injecting junk patterns, but any row outside a recognised
+    # table now vanishes with no trace instead.
+    aid = tmp_path / "aid.md"
+    aid.write_text(
+        "# aid\n"
+        "\n"
+        "| Original value | replacement | file | line |\n"
+        "|---|---|---|---|\n"
+        "| SECRETVALUE | PUBLICVALUE | f.md | 1 |\n"
+        "\n"
+        "| ORPHANVALUE | x | f.md | 2 |\n",
+        encoding="utf-8")
+    (tmp_path / "doc.md").write_text("nothing sensitive\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 2, r.stdout
+    # Anchored, not a bare substring check: "1 rows" is also a substring of
+    # "11 rows", which is exactly the discriminating-assertion defect this
+    # build hit twice already.
+    m = re.search(r"(\d+) rows? skipped outside the value table", r.stderr)
+    assert m is not None, r.stderr
+    assert int(m.group(1)) == 1
+    assert re.search(r"\bline 7\b", r.stderr), r.stderr
+    assert "value table" in r.stderr and "non-table text" in r.stderr
+
+
+def test_value_table_split_by_blank_line_is_an_error(tmp_path):
+    # This is the defect itself. A blank line resets the in-table flag, so
+    # the row after it -- which is really a continuation of the same value
+    # table, hand-added later -- used to vanish with no trace while the gate
+    # printed "clean" over a smaller population instead of catching it.
+    aid = tmp_path / "aid.md"
+    aid.write_text(
+        "| Original value | replacement | file | line |\n"
+        "|---|---|---|---|\n"
+        "| SECRETVALUE1 | x | f.md | 1 |\n"
+        "\n"
+        "| SECRETVALUE2 | y | f.md | 2 |\n",
+        encoding="utf-8")
+    (tmp_path / "doc.md").write_text("this file mentions SECRETVALUE2 plainly\n",
+                                     encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 2, r.stdout
+    assert "clean" not in r.stdout
+    m = re.search(r"(\d+) rows? skipped outside the value table", r.stderr)
+    assert m is not None, r.stderr
+    assert int(m.group(1)) == 1
+    assert re.search(r"\bline 5\b", r.stderr), r.stderr
+
+
+def test_single_table_aid_reports_zero_rows_skipped(tmp_path):
+    # The skipped count must be visible even when it is zero -- printing a
+    # count only when it is nonzero is how a nobody-checks-it number happens.
+    aid = write_aid(tmp_path, [("SECRETVALUE", "x")])
+    (tmp_path / "doc.md").write_text("fine\n", encoding="utf-8")
+    r = run(aid, tmp_path / "doc.md")
+    assert r.returncode == 0, r.stdout
+    m = re.search(r"(\d+) skipped outside the value table", r.stdout)
+    assert m is not None, r.stdout
+    assert int(m.group(1)) == 0
