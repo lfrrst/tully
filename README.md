@@ -1,4 +1,8 @@
+<img src="tully.gif" alt="Louis Tully, the Ghostbusters' accountant" align="left" width="300">
+
 # tully
+
+**There is something in your basement, and it has been posting journal entries.**
 
 Six skills that review a tool whose output a firm has to stand behind — a conversion
 utility, an allocation engine, a reporting pipeline, a macro nobody has opened in two
@@ -6,7 +10,19 @@ years, including one an AI designed. Every figure in what they produce is verifi
 executing the tool and measuring its real output, rather than by reading its
 documentation.
 
+These tools are haunted in a small number of recognisable ways, and the haunting is always
+plausible. A reconciliation reports zero variance because it subtracts a column from
+itself. A control reads green because the rows that would have failed it were filtered out
+two lines earlier. A manifest records a hash that nothing ever recomputes. None of it is
+dishonesty — it is what happens when the checks are written by the same mind that wrote the
+thing being checked. `tully` knows the classes, tests for them by execution, and shows the
+work.
+
+<br clear="left">
+
 ## What the output is, and what it is not
+
+This part does not get to be funny.
 
 The output is an internal working paper supporting a preparer and a reviewer. It is not
 an attest report, and nothing here constitutes an audit, review, or agreed-upon-procedures
@@ -14,10 +30,14 @@ engagement under professional standards.
 
 ## Why "tully"
 
-Louis Tully, the Ghostbusters' accountant, itemises his own party as a promotional expense
-and invites clients instead of friends. His defining trait is substantiation: a figure
-either has something behind it or it does not go on the return. That is the doctrine of
-this plugin — **a figure you did not produce by executing something is not evidence.**
+Louis Tully is the Ghostbusters' accountant. He itemises his own party as a promotional
+expense and invites clients instead of friends, and when the paperwork finally matters he is
+the one holding it. His defining trait is substantiation: a figure either has something
+behind it or it does not go on the return.
+
+That is the doctrine of this plugin — **a figure you did not produce by executing something
+is not evidence.** Not the changelog's figure, not the README's, not the code comment's, not
+the previous reviewer's. Those are claims, and testing them is the whole job.
 
 ## Install
 
