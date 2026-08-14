@@ -1,6 +1,13 @@
-<img src="https://cdn.foxglove.cpa/public/tully.gif" alt="Louis Tully, the Ghostbusters' accountant" align="left" width="300" hspace="24" vspace="12">
+<table>
+<tr>
+<td width="320">
 
-# Tully
+<img src="https://cdn.foxglove.cpa/public/tully.gif" alt="Louis Tully, the Ghostbusters' accountant" align="left" width="300" hspace="-20" vspace="12">
+
+</td>
+<td>
+
+# Tully - Tool Analysis Driven by Accounting Assumptions
 
 **There is something in your basement, and it has been posting journal entries.**
 
@@ -16,7 +23,9 @@ earlier. A manifest records a hash that nothing ever recomputes. None of that is
 it is what happens when the checks are written by the same mind that wrote the thing being
 checked. Tully knows the classes, tests for them by execution, and shows the work.
 
-<br clear="left">
+</td>
+</tr>
+</table>
 
 ## What the output is, and what it is not
 
