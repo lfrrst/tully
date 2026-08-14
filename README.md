@@ -1,4 +1,4 @@
-<img src="tully.gif" alt="Louis Tully, the Ghostbusters' accountant" align="left" width="300" hspace="24" vspace="12">
+<img src="https://cdn.foxglove.cpa/public/tully.gif" alt="Louis Tully, the Ghostbusters' accountant" align="left" width="300" hspace="24" vspace="12">
 
 # Tully
 
