@@ -14,11 +14,15 @@ The document a preparer works and a reviewer signs. Its job is to say exactly wh
                                 audit, review or agreed-upon-procedures engagement under
                                 professional standards
 
-1. What this document is        purpose, scope, who performs it, priority codes
+1. What this document is        purpose, scope, who performs it, priority codes, and the
+                                accounting assumptions table: all twelve standard items,
+                                each with its verdict; the assertion set and its source,
+                                plus the PCAOB crosswalk where the output feeds an issuer
 2. Before you start             the conditions that make the review meaningful at all
 3. The artifacts                every file the reviewer will open, what it is, its size on the reference run
-4. The things only a human can check   the 3-5 risks no control in the tool addresses
-5. Materiality and sample sizes
+4. Materiality and sample sizes
+5. The top ten                  up to ten checks, ranked, each pointing at its test; ten is
+                                a ceiling, not a quota
 
 PART A — Preliminary procedures      establishing that you are reviewing what you think you are
 PART B — Assertions for transactions and events
@@ -28,33 +32,23 @@ PART E — Sign-off
 PART F — Findings register: what the tool asserts that is not true
 ```
 
+## Only what this project rests on
+
+**Start from the accounting assumptions, not from the list of assertions.** Before writing a test, work the standard list in `accounting-assumptions.md`, beside this file, in order, and give every item a verdict: applies, with where the tool puts it into effect, or does not apply, with a fact that rules it out. The same list is worked on every engagement, so every book starts from the same thinking. The verdicts go in §1 as a table, so the reviewer can see what the book was built from. Every test traces to an item marked applies, to a finding in `evidence/03-findings.md`, or to a control in PART D, and says which.
+
+**An assertion that no applicable item touches gets one sentence, not a test.** "Not applicable: the file moves balances between accounts of one entity and changes no ownership" is a complete Rights and obligations section. A test written to give a heading something under it is worse than that sentence. It costs the reviewer time, it teaches them that some tests in the book are padding, and from then on they guess which ones.
+
+**Apply the swap test.** If a test would read the same in the checklist for a different tool or a different client, it is generic. Make it specific (the artifact, the column, the reference figure, the assumption it protects) or cut it.
+
+**The count is an output.** No section has a minimum number of tests, and a short section is not a defect.
+
 ## The assertion spine
 
 Use both assertion sets when the deliverable is both an event and a position — a conversion journal, for instance, is a transaction posted to a period *and* the opening balance of every account it establishes. Where only one applies, use only that one and say why.
 
 **Name the population each set tests, and keep them apart.** This is what stops the two halves of the book restating each other. The transaction assertions test the *file as an event* — the journal as it will be posted, tested against the source. The balance assertions test the *position that results* — the account balances the file establishes in the target system, tested against the entity's own financial statements. They are different populations and often different procedures against the same numbers, and a reviewer who has not been told which one they are in will do the same test twice and miss the other.
 
-**Transactions and events**
-
-| Assertion | For a tool review, this means |
-|---|---|
-| Occurrence | Every line in the output traces to a real source record or to a construction that names its rule |
-| Completeness | Every source record that should be there is, and everything withheld is named and justified |
-| Accuracy | Amounts and attributes are right — signs, precision, constants, rejection counts |
-| Cutoff | The period, the effective date and the basis all describe the same moment |
-| Classification | Values landed in the right accounts and the right fields |
-| Presentation | Right level of aggregation, clearly described, formatting survives to the consumer |
-
-**Account balances**
-
-| Assertion | For a tool review, this means |
-|---|---|
-| Existence | Every balance in the output exists in the source, and every value exists in the target system |
-| Rights and obligations | Balances sit in the entity that owns them; restrictions survive |
-| Completeness | Every account with a balance is present; the position foots and agrees |
-| Accuracy, valuation and allocation | Amounts agree at account level; establish whether the tool performs any valuation at all |
-| Classification | Current/non-current, contra accounts, equity — the places a plausible-but-wrong mapping hides |
-| Presentation | The statement as the target system will render it, agreed to the last audited figures |
+**The twelve assertions are defined in `audit-assertions.md`, beside this file:** the definition of each, what it means for a tool review, its source (AU-C 315 as amended by SAS No. 145), and its PCAOB AS 1105.11 category. Read it before writing PARTs B and C. §1 names the assertion set and its source in one sentence, and carries the PCAOB crosswalk where the output feeds an issuer's financial statements.
 
 A data element that bears on more than one assertion appears under each. Cross-reference rather than repeat the full procedure.
 
@@ -115,9 +109,11 @@ The distinction that drives the rating is *where the expectation comes from*. A 
 
 **§2 — Before you start.** The two or three conditions under which the review means anything. Typically: the run under review was produced by the deployed build (check the version stamp — archived runs are routinely produced by older builds), and the reviewer knows which mode or basis they are looking at. These are not tests; if they fail, stop.
 
-**§4 — The things only a human can check.** Three to five paragraphs naming the risks no control in the tool addresses at all. This is the section a partner reads. Each points at its test.
+**§4 — Materiality.** Propose a figure against the deliverable's own units, name what carries zero tolerance, and flag it for partner agreement. Then say something honest about sampling: for a machine-readable, finite, complete population, 100% testing is usually available at trivial cost and is the better answer. Sample only where each item genuinely needs human judgement.
 
-**§5 — Materiality.** Propose a figure against the deliverable's own units, name what carries zero tolerance, and flag it for partner agreement. Then say something honest about sampling: for a machine-readable, finite, complete population, 100% testing is usually available at trivial cost and is the better answer. Sample only where each item genuinely needs human judgement.
+**§5 — The top ten.** The checks that matter most on this engagement, ranked, one short paragraph each: what to check, the specific reason it is on the list (the finding, the missing or [T-WEAK] control, or the assumption it protects) with its reference figure and `RUN`, and the ID of the test that performs it. This is the section a partner reads, and the one a reviewer works first when the day is short. It comes after §4 because the ranking is by what an error would do to the deliverable, in its own units, against that materiality. Put the risks no control addresses at all, the [NONE] tests, at the head of the list. A [T-INDEP] test belongs here only where the reviewer must still confirm the control ran.
+
+Ten is a ceiling, not a quota. If six checks matter, list six and say so in one line, because a seventh added to reach ten dilutes the six. Every entry points at a test in PARTs A to C. An entry with no test behind it is a worry, not a check, and it belongs in PART F if it is demonstrably true and nowhere if it is not.
 
 **PART D — The controls, and what each is worth.** One row per control: does it block, what did it say on the reference run, what does it genuinely cover, what does it not. This is the page a reviewer keeps open beside the tool's own dashboard, and it is the fastest way to communicate the attestation/detection gap.
 

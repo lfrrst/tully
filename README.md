@@ -76,7 +76,7 @@ In phase order, the orchestrator first.
 | `establish-the-truth` | Phase 1. Executes the tool for real and measures its actual output, producing the evidence base every later figure is quoted from. |
 | `map-the-code` | Phase 2. Documents every module and function (signature, business purpose, mechanism with line citations, load-bearing assumptions, failure modes), plus the ordered execution spine of the entry point. |
 | `hunt-the-findings` | Phase 3. Works a twelve-section catalogue of the defect classes that tools producing financial deliverables actually have, rather than reading the code again and hoping something surfaces. |
-| `write-the-books` | Phase 4. Writes the two deliverables, a human review checklist organised by audit assertion and the function-level code review, with every figure attributed to a measured run. |
+| `write-the-books` | Phase 4. Writes the two deliverables, a human review checklist organised by audit assertion and the function-level code review, with every figure attributed to a measured run. The checklist opens with a ranked top ten (ask for that alone if it is all you need) and tests only the accounting assumptions the project actually rests on. Every engagement works through the same standard list of twelve, and each one is marked as applying or not. An assertion that does not apply gets a sentence saying so, not a test. |
 | `check-the-facts` | Phase 5. Adversarially fact-checks a finished document: resolves every `file.ext:NNN` citation mechanically, re-derives every quantitative claim from the run folders, and reproduces every finding from scratch. |
 
 Each is independently invocable. Phase 5 in particular is worth running against a document
