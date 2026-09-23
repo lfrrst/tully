@@ -22,6 +22,11 @@ jobs:
         run: python -m pip install --upgrade pip pytest
       - name: Validate skill structure
         run: python tools/validate_skills.py
+      - name: Validate the plugin manifest as Claude Code loads it
+        # validate_skills.py never reads plugin.json. Release 1 shipped a manifest Claude
+        # Code rejects, which drops the whole plugin at load, and every other step here
+        # stayed green. Unpinned on purpose: a stricter CLI is what users will run.
+        run: npx -y @anthropic-ai/claude-code plugin validate .
       - name: Run tests
         run: python -m pytest -q
       - name: Assert the anonymisation review aid is not tracked and never entered history
