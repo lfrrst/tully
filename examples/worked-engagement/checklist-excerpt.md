@@ -7,8 +7,8 @@ The client slot in the heading is left as a placeholder because no client, real 
 invented, is named anywhere in this repository. See [README.md](README.md).
 
 **This excerpt is §1, one test from PART B, two from PART C, and two rows of PART F.**
-The finished book also carries §2 (before you start), §3 (the artifacts), §4 (the
-things only a human can check), §5 (materiality and sample sizes), PART A
+The finished book also carries §2 (before you start), §3 (the artifacts), §4
+(materiality and sample sizes), §5 (the top ten), PART A
 (preliminary procedures), the rest of PARTs B and C, PART D (the control inventory
 and what each control is worth) and PART E (sign-off). The tests below quote
 materiality only where a threshold is part of the procedure.
@@ -32,6 +32,18 @@ reference runs are defined in
 extract supplied) and RUN B-FUND-100 (one fund, restriction extract withheld).
 Every figure quoted in a procedure below names the run it came from. Where the two
 runs disagree, both are given, because the disagreement is usually the point.
+
+**The accounting assumptions this conversion rests on.** Every test below traces to an
+item marked *applies*. An assertion that no such item touches carries one sentence
+saying why, and no test. The finished book's table has all twelve standard items,
+including the ones that do not apply. This excerpt shows only the three that the tests
+below trace to.
+
+| # | Assumption | Verdict | How this conversion relies on it | Tests |
+|---|---|---|---|---|
+| 3 | Period, cutoff and effective date | Applies | The balances are stated as of 2026-03-31, the `--as-of` both reference runs used | not in this excerpt |
+| 6 | Chart of accounts mapping | Applies | Every Aurora account the journal names has to exist in Aurora's own chart of accounts | C-1 |
+| 7 | Dimensions and attributes | Applies | The segment string has to be in the order Aurora's import layout reads it, which the tool takes on trust from the column order of the client's segment map. Restriction status comes from the Ledgerline fund register and has to survive onto every line of a restricted fund | B-5, C-3 |
 
 **Who performs it.** A preparer works every test and initials it. The reviewer
 re-performs independently every test marked `[R]`. Nothing here is delegated to the

@@ -1,6 +1,6 @@
 ---
 name: review-the-tool
-description: "Produce a human review checklist and a function-level code review for any tool whose output a firm has to stand behind, with every figure verified by executing the tool rather than reading its documentation. Use whenever the user asks to review, validate, document, sign off on, get comfortable with, or hand to a reviewer any script, model, macro, conversion utility, calculator, allocation engine, ETL job, migration tool, or reporting pipeline that produces client deliverables or feeds financial statements. Trigger on 'review this tool', 'can we rely on this', 'document what this code does', 'build a review checklist', 'what should a human check', 'the auditors will ask', 'workpaper for this script', or 'validate this conversion'. Also trigger proactively when someone is about to ship output from a tool nobody has independently reviewed."
+description: "Produce a human review checklist and a function-level code review for any tool whose output a firm has to stand behind, with every figure verified by executing the tool rather than reading its documentation. Use whenever the user asks to review, validate, document, sign off on, get comfortable with, or hand to a reviewer any script, model, macro, conversion utility, calculator, allocation engine, ETL job, migration tool, or reporting pipeline that produces client deliverables or feeds financial statements. Trigger on 'review this tool', 'can we rely on this', 'document what this code does', 'build a review checklist', 'what should a human check', 'the auditors will ask', 'workpaper for this script', 'top ten things to check', or 'validate this conversion'. Also trigger proactively when someone is about to ship output from a tool nobody has independently reviewed."
 ---
 
 # Review the tool
@@ -26,8 +26,9 @@ They are written together because they need each other. The checklist's compensa
 procedures exist only because the code review found the gaps they compensate for — a
 procedure telling a reviewer to re-perform a reconciliation by hand is busywork until the
 code review has established that the tool's own reconciliation compares a column against
-itself. Produce both by default. If the user asks for one, produce that one and still run
-the research phases in full, because a checklist written without reading the code is a
+itself. Produce both by default. If the user asks for one, or only for the top ten checks
+(the ranked list that opens the checklist), produce that and still run the research phases
+in full, because a checklist written without reading the code is a
 generic checklist and the specific one is what is being paid for.
 
 ## The idea that makes this worth doing
@@ -243,7 +244,7 @@ no defect, and the reader will assume the flattering one.
 
 **Phase 4 — `write-the-books`.** Turns the evidence files into the two deliverables, each
 named for the client, the tool and the tool's version. Hands back both book paths, or the
-path to the one book where only one was asked for. Where a project or knowledge base is
+path to the one book or the top ten where only that was asked for. Where a project or knowledge base is
 attached to the session, that skill also saves **the project record** as the tail of its
 own run: a short note beside the books giving what was produced, the reference runs and
 their key figures, the three findings that matter most, and anything that corrects an earlier

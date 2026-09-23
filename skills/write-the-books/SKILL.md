@@ -1,6 +1,6 @@
 ---
 name: write-the-books
-description: "Write the two deliverables of a tool review: a human review checklist organised by audit assertion, and a function-level code review, both Markdown, every figure attributed to a measured run. Use when the research phases of a review are complete and the deliverables need writing, or when asked to turn findings and a code map into a document a preparer works and a reviewer signs. Trigger on 'write it up', 'produce the checklist', 'write the code review', 'turn this into a workpaper', or 'I need something a partner can read'. Requires evidence/01 through 03; states what is missing rather than inventing figures."
+description: "Write the two deliverables of a tool review: a human review checklist organised by audit assertion, and a function-level code review, both Markdown, every figure attributed to a measured run. Use when the research phases of a review are complete and the deliverables need writing, or when asked to turn findings and a code map into a document a preparer works and a reviewer signs. Trigger on 'write it up', 'produce the checklist', 'write the code review', 'turn this into a workpaper', 'I need something a partner can read', or 'what are the top ten things to check'. Requires evidence/01 through 03; states what is missing rather than inventing figures."
 ---
 
 # Write the books
@@ -40,8 +40,17 @@ objection in the delivery, in a preamble, or as a standing caveat in the documen
 a document that presses every point flattens the ones that matter, and an argument made
 three times reads as an argument the author lost.
 
+If you are asked for only the top ten, write the checklist's §5 as its own file, with the
+working-paper statement, the assumptions table from §1 and the materiality proposal from §4
+above it, because the ranking means nothing without the figure it ranks against. The
+research phases still run in full, for the same reason as above: a top ten written without
+reading the code is a list of the ten things every tool should be checked for, and the
+caller already has that list.
+
 ## The structures are in the references, and they are contracts
 
+`references/audit-assertions.md` defines the twelve assertions the checklist is organised
+by, gives their source, and maps them to the five PCAOB AS 1105.11 categories.
 `references/checklist-book.md` holds the checklist's section order, the assertion spine,
 the per-test template, the priority codes and the reliance ratings.
 `references/code-review-book.md` holds the code review's section order, the per-function
@@ -69,6 +78,16 @@ transaction assertions test the file as an event, against the source; the balanc
 assertions test the position it establishes, against the entity's own financial
 statements. Often they are different procedures over the same numbers, and a reviewer who
 has not been told which one they are in will do one test twice and never do the other.
+
+**Test only what this project rests on.** The twelve assertions are a map of where tests can
+go, not a list of sections to fill. Start from `references/accounting-assumptions.md`, the
+standard list of twelve accounting assumptions. Work it in order on every engagement, so
+every book starts from the same thinking, and give each item a verdict: applies, with where
+the tool puts it into effect, or does not apply, with a fact that anyone can check. Derive
+each test from an item that applies, from a finding, or from a control. An assertion none of
+those touches gets one sentence saying why it does not apply here, never a test written so
+the heading has something under it. The rules, and the swap test for spotting a generic
+test, are in `references/checklist-book.md` under "Only what this project rests on".
 
 **Rate every test [T-INDEP], [T-WEAK] or [NONE], on where the control's expectation comes
 from.** Not on how the control looks, and not on how the tool's documentation describes
@@ -178,7 +197,9 @@ tests — does the total tie, is the period right, is the sign convention right 
 are the ones written last or not at all, because nothing in the research phases pushed
 them at you. Write them anyway. The reviewer's real exposure is a mundane error in an area
 where nobody found a defect, and a checklist that omits the ordinary test has told them by
-omission that it was covered.
+omission that it was covered. Ordinary is not the same as generic, though: each one still
+traces to an assumption this deliverable rests on, and a test that would read the same for
+any tool is not an ordinary test but filler.
 
 **Where the tool's vocabulary and the register's differ, say so once and then be
 consistent.** If the tool calls something a gate and the register calls the same thing a
@@ -209,7 +230,8 @@ has taken a judgement it has no standing to take.
 
 Two `.md` files, each name carrying the client, the tool and the version:
 `<Client>-<Tool>-Human-Review-Checklist-v<X.Y>.md` and
-`<Client>-<Tool>-Code-Review-v<X.Y>.md`. Deliver them — the paths, in your answer, rather
+`<Client>-<Tool>-Code-Review-v<X.Y>.md`, plus `<Client>-<Tool>-Top-Ten-v<X.Y>.md` where
+the top ten was asked for on its own. Deliver them — the paths, in your answer, rather
 than a description of what you wrote.
 
 The version in the name is the tool's, not the document's, and it earns its place. These
@@ -285,4 +307,5 @@ one and leaving both in the file.
   every figure in both books measured rather than quoted, and a worked catalogue gives the
   checklist its compensating procedures — the tests only this review could have told the
   reviewer to perform.
-- *Hands back:* the paths to both books, or to the one that was asked for.
+- *Hands back:* the paths to both books, or to the one that was asked for, or to the top
+  ten where only that was asked for.

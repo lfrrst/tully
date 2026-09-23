@@ -192,7 +192,10 @@ Everything goes to `evidence/03-findings.md`. Per candidate:
 - **The shape observed** — what is actually in the code, with `file.ext:NNN` citations
   verified by opening the file at that line.
 - **How it was tested** — the operation. A command, an edit, a deletion, a run.
-- **The verdict** — defect, sound, or not determinable, and for a defect what it does to
+- **The verdict** — defect, sound, not determinable, or not applicable. Not applicable
+  needs a fact about this tool that anyone can check, such as "no network listener: a
+  search for bind, listen and serve finds none", and never a test invented so the section
+  has something in it. For a defect, say what it does to
   the deliverable stated in the deliverable's own units.
 - **The evidence** — the figures the verdict rests on, each naming its `RUN`.
 - **Reproducible** — yes, with the steps; or no, with the reason.

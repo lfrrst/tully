@@ -8,6 +8,7 @@
       "assertions": [
         "Produces both books rather than one",
         "Organises the checklist by audit assertion",
+        "Names the assertion set and its source standard in section 1",
         "Names the population each assertion set tests",
         "Rates every test T-INDEP, T-WEAK or NONE",
         "Bases the rating on where the control's expectation comes from",
@@ -40,6 +41,32 @@
         "Presents no documented figure as measured",
         "Marks the findings section not-performed rather than leaving it blank",
         "States that the document is documentation, not assurance"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Research is done. I don't need the full books, just give me the top 10 things we need to check before this goes out.",
+      "expected_output": "Should write the top ten as its own file, carrying the working-paper statement, the list of accounting assumptions the deliverable rests on, and the proposed materiality it ranks against. Should rank the checks by what an error would do to the deliverable in its own units, with the checks no control covers at the head. Each entry should name the specific reason it is on the list, quote its reference figure with the run it came from, and point at the test that performs it. Should list fewer than ten if fewer matter, and say so, rather than padding to ten.",
+      "assertions": [
+        "Writes the top ten as its own file",
+        "Carries the working-paper statement, the assumption list and the materiality proposal",
+        "Ranks by impact on the deliverable, with uncontrolled checks first",
+        "Each entry gives a project-specific reason, a figure with its run, and a test ID",
+        "Lists fewer than ten rather than padding when fewer matter"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Write the checklist. The tool reclassifies expense lines between departments inside one company's GL. No valuation, no entity changes, no new balances.",
+      "expected_output": "Should work all twelve items of the standard accounting-assumptions list, in order, and put the verdicts in a table in section 1: applies, with where the tool puts it into effect, or does not apply, with a fact that rules it out. Items such as reporting entity, currency and measurement and valuation should come back as does not apply, each with its fact, and get no tests. Every test should trace to an item that applies, a finding, or a control. Assertions that nothing touches, such as rights and obligations and valuation, should get one sentence saying why they do not apply here rather than a test. Should not include tests that would read the same for any tool or client.",
+      "assertions": [
+        "Works all twelve standard assumption items in order",
+        "Gives every item a verdict in a section 1 table, with a checkable fact for each one that does not apply",
+        "Traces every test to an applicable assumption, a finding or a control",
+        "Marks non-applicable assertions with one sentence and no test",
+        "Includes no generic test that would read the same for a different tool"
       ],
       "files": []
     }
